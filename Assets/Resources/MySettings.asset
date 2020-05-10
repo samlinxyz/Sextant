@@ -1,0 +1,73 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd28fd01d6e0a34458d3195856984c7a, type: 3}
+  m_Name: MySettings
+  m_EditorClassIdentifier: 
+  locus: 0
+  planckianLocus:
+    serializedVersion: 2
+    key0: {r: 1, g: 0.16996826, b: 0, a: 1}
+    key1: {r: 1, g: 0.62426347, b: 0.3176471, a: 1}
+    key2: {r: 1, g: 1, b: 1, a: 0}
+    key3: {r: 0.9, g: 0.92972976, b: 1, a: 0}
+    key4: {r: 0.8, g: 0.86666673, b: 1, a: 0}
+    key5: {r: 0.6745283, g: 0.78548455, b: 1, a: 0}
+    key6: {r: 0.6273585, g: 0.75306886, b: 1, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 0
+    ctime1: 4433
+    ctime2: 14090
+    ctime3: 16384
+    ctime4: 20316
+    ctime5: 32768
+    ctime6: 65535
+    ctime7: 0
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_NumColorKeys: 7
+    m_NumAlphaKeys: 2
+  altoLocus:
+    serializedVersion: 2
+    key0: {r: 1, g: 0, b: 0.4499998, a: 1}
+    key1: {r: 1, g: 0.3176471, b: 0.62124705, a: 1}
+    key2: {r: 1, g: 1, b: 1, a: 0}
+    key3: {r: 0.91861147, g: 0.9019608, b: 1, a: 0}
+    key4: {r: 0.8333333, g: 0.8, b: 1, a: 0}
+    key5: {r: 0.72875816, g: 0.6745098, b: 1, a: 0}
+    key6: {r: 0.6895425, g: 0.627451, b: 1, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 0
+    ctime1: 4433
+    ctime2: 14090
+    ctime3: 16384
+    ctime4: 20316
+    ctime5: 32768
+    ctime6: 65535
+    ctime7: 0
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_NumColorKeys: 7
+    m_NumAlphaKeys: 2
