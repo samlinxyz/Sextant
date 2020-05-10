@@ -11,10 +11,10 @@ public class StarFieldEditor : Editor
         StarFieldManager field = (StarFieldManager)target;
 
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button("ConfigureStarsTransform")) field.ConfigureStarsTransform();
+        if (GUILayout.Button("Configure Stars Transform")) field.ConfigureStarsTransform();
         GUILayout.EndHorizontal();
 
-        if (GUILayout.Button("StarsFocusOrigin")) field.StarsFaceOrigin();
+        if (GUILayout.Button("Stars Face Origin")) field.StarsFaceOrigin();
 
         GUILayout.BeginHorizontal();
         if (GUILayout.Button("Load stars")) field.LoadStars();

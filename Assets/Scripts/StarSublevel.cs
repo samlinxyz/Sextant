@@ -84,7 +84,7 @@ public class StarSublevel : MonoBehaviour
     {
         Transform candidateStar = null;
         float closestAngle = 180f;
-        foreach (Transform star in StarFieldManager.instance.transform)
+        foreach (Transform star in StarField.StarTransformArray())
         {
             float angle = Vector3.Angle(transform.position, star.position);
             if (closestAngle > angle)

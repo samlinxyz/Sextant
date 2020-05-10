@@ -19,14 +19,13 @@ public class ConstellationLines : MonoBehaviour
     public float fieldOfView;
     public float zRotation;
 
-
-
-    private StarSublevel[] stages;
+    [SerializeField]
+    private StarSublevel[] stages = null;
     private StarSublevel[] Stages
     {
         get
         {
-            if (stages == null)
+            if (stages == null || stages.Length == 0)
             {
                 stages = GetComponentsInChildren<StarSublevel>();
             }
@@ -34,12 +33,13 @@ public class ConstellationLines : MonoBehaviour
         }
     }
 
-    private Line[] lines;
+    [SerializeField]
+    private Line[] lines = null;
     private Line[] Lines
     {
         get
         {
-            if (lines == null)
+            if (lines == null || lines.Length == 0)
             {
                 lines = GetComponentsInChildren<Line>();
             }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 [ExecuteInEditMode]
 public class StarFieldManager : MonoBehaviour
@@ -16,8 +17,6 @@ public class StarFieldManager : MonoBehaviour
     [SerializeField, Range(0f, 1f)]
     private float dimAlpha;
     public float DimAlpha { get { return dimAlpha; } }
-
-    
 
     void Awake()
     {
@@ -35,6 +34,7 @@ public class StarFieldManager : MonoBehaviour
                 string[] entry = line.Split(',');
 
                 GameObject starObject = Instantiate(starPrefab, transform);
+                starObject.tag = "Star";
 
                 starObject.transform.position = new Vector3(float.Parse(entry[0]), float.Parse(entry[1]), float.Parse(entry[2]));
 
@@ -48,14 +48,22 @@ public class StarFieldManager : MonoBehaviour
 
                 star.absoluteMagnitude = float.Parse(entry[4]);
                 star.truePosition = starObject.transform.position;
+
+                
             }
         }
+
+        ConfigureStarsTransform();
+        StarsFaceOrigin();
     }
 
     public void DeleteAllStars()
     {
-        for (int i = 0; i < transform.childCount; i++)
-            DestroyImmediate(transform.GetChild(i).gameObject);
+        int childCount = transform.childCount;
+        for (int i = 0; i < childCount; i++)
+        {
+            DestroyImmediate(transform.GetChild(childCount - i - 1).gameObject);
+        }
     }
 
     //  Creates the original positions of the stars

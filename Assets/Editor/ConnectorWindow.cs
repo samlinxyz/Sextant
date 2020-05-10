@@ -222,7 +222,7 @@ public class ConnectorWindow : EditorWindow
 
             view.cameraSettings.fieldOfView = constellation.GetComponent<ConstellationLines>().GetFOV();
 
-            StarFieldManager.instance.StarsFaceOrigin();
+            StarField.StarsFaceOrigin();
         }
 
         //  Look at the selected transform and set the pivot to the origin. The user will have to use the scroll wheel to adjust their distance from the pivot.

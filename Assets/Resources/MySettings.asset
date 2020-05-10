@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd28fd01d6e0a34458d3195856984c7a, type: 3}
   m_Name: MySettings
   m_EditorClassIdentifier: 
-  locus: 1
+  locus: 0
   planckianLocus:
     serializedVersion: 2
     key0: {r: 1, g: 0.16996826, b: 0, a: 1}

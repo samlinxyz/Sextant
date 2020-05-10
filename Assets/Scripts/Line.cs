@@ -195,7 +195,7 @@ public class Line : MonoBehaviour
     {
         Transform candidateStar = null;
         float closestAngle = 180f;
-        foreach (Transform star in StarFieldManager.instance.transform)
+        foreach (Transform star in StarField.StarTransformArray())
         {
             float angle = Vector3.Angle(line.GetPosition(0), star.position);
             if (closestAngle > angle)
@@ -211,7 +211,7 @@ public class Line : MonoBehaviour
 
         candidateStar = null;
         closestAngle = 180f;
-        foreach (Transform star in StarFieldManager.instance.transform)
+        foreach (Transform star in StarField.StarTransformArray())
         {
             float angle = Vector3.Angle(line.GetPosition(1), star.position);
             if (closestAngle > angle)
