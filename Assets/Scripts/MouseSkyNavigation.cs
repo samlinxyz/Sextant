@@ -16,11 +16,11 @@ public class MouseSkyNavigation : MonoBehaviour
     private Vector2 targetRotation = Vector2.zero;
 
     [SerializeField]
-    private float mininumDeclination;
+    private float mininumDeclination = 12.5f;
     public float MininumDeclination { get { return mininumDeclination; } }
 
     [SerializeField]
-    private float maximumDeclination;
+    private float maximumDeclination = 85f;
 
     Vector3 initialMousePosition;
     Vector2 deltaMousePosition;

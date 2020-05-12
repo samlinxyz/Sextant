@@ -5,11 +5,18 @@ using DG.Tweening;
 
 public class StarSublevel : MonoBehaviour
 {
-    [SerializeField, Range(0.2f, 10f)]
-    float difficulty;
+    [SerializeField, Range(0f, 1f)]
+    private float difficulty;
     public float Difficulty
     {
-        get { return difficulty; }
+        get 
+        {
+            float normalizedTemperature = associatedStar.Temperature / 30000f;
+            float normalizedDifficulty = (Mathf.Sqrt(normalizedTemperature) - 0.5f) * 3.1f + 0.5f;
+            normalizedDifficulty = Mathf.Clamp01(normalizedDifficulty);
+            difficulty = normalizedDifficulty;
+            return normalizedDifficulty;
+        }
     }
 
     [SerializeField]
@@ -104,7 +111,7 @@ public class StarSublevel : MonoBehaviour
         vmag = 1f - vmag / 6.5f;
         vmag = Mathf.Clamp(vmag, 0f, 5f);
         diffraction.transform.localScale = 1.5f * Vector3.one * (0.75f * vmag + 0.25f);
-        diffraction.color = associatedStar.trueColor;
+        diffraction.color = associatedStar.TrueColor;
     }
 
     //  Sets the position of this stage as 200 m in the direction of the associated star's position.

@@ -9,7 +9,7 @@ public class Line : MonoBehaviour
     [SerializeField]
     private Camera cam;
     [SerializeField]
-    private LineRenderer line;
+    private LineRenderer line = null;
     void Start()
     {
         cam = Camera.main;

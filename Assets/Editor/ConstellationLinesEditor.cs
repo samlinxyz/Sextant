@@ -7,8 +7,10 @@ public class ConstellationLinesEditor : Editor
 
     public override void OnInspectorGUI()
     {
-        ConstellationLines lines = (ConstellationLines)target;
+        //var so = new SerializedObject(target);
         base.OnInspectorGUI();
+
+        ConstellationLines lines = (ConstellationLines)target;
 
         if (GUILayout.Button("Set Collider Size")) lines.EditorAdjustColliderSize();
 
@@ -20,6 +22,7 @@ public class ConstellationLinesEditor : Editor
             else
                 Debug.Log("Last active scene view is null.");
         }
+
         if (GUILayout.Button("Set camera z rotation to scene"))
         {
             SceneView view = SceneView.lastActiveSceneView;
@@ -35,15 +38,24 @@ public class ConstellationLinesEditor : Editor
             lines.squishFactor = newSquishFactor;
             lines.field.SquishStarsAround(lines.transform, true);
         }
+
         if (GUILayout.Button("Test squish factor")) lines.field.SquishStarsAround(lines.transform, true);
-        //if (GUILayout.Button("Save squish factor")) lines.SetSquishFactor(newSquishFactor);
-
-
 
         if (GUILayout.Button("Normalize Stage Positions")) lines.EditorNormalizeStagePositions();
-        if (GUILayout.Button("Set Star References")) lines.SetStarReferences();
 
-        
+        if (GUILayout.Button("Set Star References")) 
+        {
+            Undo.RegisterFullObjectHierarchyUndo(lines.gameObject, "Set Star References");
+
+            foreach (StarSublevel stage in lines.Stages)
+            {
+                stage.FindAssociatedStar();
+            }
+            foreach (Line line in lines.Lines)
+            {
+                line.FindAssociatedStars();
+            }
+        }
     }
 
     protected virtual void OnSceneGUI()

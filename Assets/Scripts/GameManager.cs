@@ -59,11 +59,11 @@ public class GameManager : MonoBehaviour
 
     #region Selection Camera Animation Variables
     [SerializeField]
-    private float skyViewFOV;
+    private float skyViewFOV = 70f;
     public float SkyViewFOV { get { return skyViewFOV; } }
 
     [SerializeField]
-    private float zoomDuration;
+    private float zoomDuration = 1f;
 
     private Tween cameraRotationAnimation = null;
     private Tween cameraFOVAnimation = null;
@@ -76,10 +76,6 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private float cameraAnimationDuration;
     #endregion
-
-    [SerializeField]
-    private static float n;
-    public static float N { get { return n; } }
 
     public static GameManager instance = null;  //  Amazing! This allows you to find and reference the Game Manager script from everywhere by typing GameManager.instance!!! 
     void Awake()

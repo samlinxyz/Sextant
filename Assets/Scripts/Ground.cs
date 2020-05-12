@@ -7,7 +7,7 @@ public class Ground : MonoBehaviour
     public Camera mainCamera;
     public float height;
     [SerializeField]
-    private Transform floor;
+    private Transform floor = null;
     void Update()
     {
         transform.position = mainCamera.transform.forward + height * Vector3.down;

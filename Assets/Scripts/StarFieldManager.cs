@@ -15,7 +15,7 @@ public class StarFieldManager : MonoBehaviour
     public GameObject starPrefab;
 
     [SerializeField, Range(0f, 1f)]
-    private float dimAlpha;
+    private float dimAlpha = 0.5f;
     public float DimAlpha { get { return dimAlpha; } }
 
     void Awake()
@@ -23,48 +23,6 @@ public class StarFieldManager : MonoBehaviour
         instance = this;
     }
 
-    //  Loads data about position, color, and absolute magnitude of all stars from a csv.
-    public void LoadStars()
-    {
-        if (File.Exists(Application.dataPath + "/starsData.csv"))
-        {
-            string dataString = File.ReadAllText(Application.dataPath + "/Resources/Stars - GameData.csv");
-            foreach (string line in dataString.Split('\n'))
-            {
-                string[] entry = line.Split(',');
-
-                GameObject starObject = Instantiate(starPrefab, transform);
-                starObject.tag = "Star";
-
-                starObject.transform.position = new Vector3(float.Parse(entry[0]), float.Parse(entry[1]), float.Parse(entry[2]));
-
-                Star star = starObject.GetComponent<Star>();
-
-                star.game = game;
-                star.cam = mainCamera.transform;
-                star.field = this;
-
-                star.Temperature = float.Parse(entry[3]);
-
-                star.absoluteMagnitude = float.Parse(entry[4]);
-                star.truePosition = starObject.transform.position;
-
-                
-            }
-        }
-
-        ConfigureStarsTransform();
-        StarsFaceOrigin();
-    }
-
-    public void DeleteAllStars()
-    {
-        int childCount = transform.childCount;
-        for (int i = 0; i < childCount; i++)
-        {
-            DestroyImmediate(transform.GetChild(childCount - i - 1).gameObject);
-        }
-    }
 
     //  Creates the original positions of the stars
     public void ConfigureStarsTransform()
@@ -91,8 +49,10 @@ public class StarFieldManager : MonoBehaviour
 
                 }
                 else
+                {
                     star.GetComponent<Star>().ConfigureTransform();
                     star.GetComponent<Star>().UpdateTransform();
+                }
             }
         }
     }

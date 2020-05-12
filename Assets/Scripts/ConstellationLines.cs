@@ -21,7 +21,7 @@ public class ConstellationLines : MonoBehaviour
 
     [SerializeField]
     private StarSublevel[] stages = null;
-    private StarSublevel[] Stages
+    public StarSublevel[] Stages
     {
         get
         {
@@ -35,7 +35,7 @@ public class ConstellationLines : MonoBehaviour
 
     [SerializeField]
     private Line[] lines = null;
-    private Line[] Lines
+    public Line[] Lines
     {
         get
         {
@@ -146,7 +146,7 @@ public class ConstellationLines : MonoBehaviour
     public float GetZRotation() { return zRotation; }
 
     [SerializeField]
-    private SphereCollider levelSphere;
+    private SphereCollider levelSphere = null;
     public float LevelRadius { get { return levelSphere.radius; } }
 
     public void EnableColliderButton(bool enable)
@@ -154,17 +154,6 @@ public class ConstellationLines : MonoBehaviour
         levelSphere.enabled = enable;
     }
 
-    public void SetStarReferences()
-    {
-        foreach (StarSublevel stage in Stages)
-        {
-            stage.FindAssociatedStar();
-        }
-        foreach (Line line in Lines)
-        {
-            line.FindAssociatedStars();
-        }
-    }
     public void EditorNormalizeStagePositions()
     {
         foreach (StarSublevel stage in GetComponentsInChildren<StarSublevel>())
@@ -172,7 +161,7 @@ public class ConstellationLines : MonoBehaviour
     }
 
     [SerializeField, Range(1f, 50f)]
-    private float stageRadius;
+    private float stageRadius = 1f;
     public void EditorAdjustColliderSize()
     {
         foreach (SphereCollider stageButton in transform.GetComponentsInChildren<SphereCollider>())

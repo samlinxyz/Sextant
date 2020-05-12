@@ -4,7 +4,7 @@
 public class CircularFade : MonoBehaviour
 {
     [SerializeField]
-    private Shader shader;
+    private Shader shader = null;
     
     [SerializeField, Range(0f, 2f)]
     public float fadeRadius;    //  In units of the longer screen dimension.
@@ -38,7 +38,7 @@ public class CircularFade : MonoBehaviour
     }
 
     [SerializeField, Range(0f, 1f)]
-    private float softness;
+    private float softness = 0.3f;
     [SerializeField]
     private Color maskColor = Color.black;
 

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using UnityEngine;
 
 public class Star : MonoBehaviour
@@ -16,7 +17,13 @@ public class Star : MonoBehaviour
     [SerializeField]
     private SpriteRenderer sprite;
 
-    public Color trueColor; //  The color that all stars can revert to.
+    public Color TrueColor
+    {
+        get
+        {
+            return sprite.color;
+        }
+    }
 
     [SerializeField]
     private float temperature = 0f;
@@ -32,7 +39,7 @@ public class Star : MonoBehaviour
             if (temperature == 0f)
             {
                 Color starColor = Settings.I.ReadLocus(value);
-                sprite.color = trueColor = starColor;
+                sprite.color = starColor;
                 temperature = value;
             }
             else
@@ -88,21 +95,28 @@ public class Star : MonoBehaviour
     {
         float distance = Vector3.Distance(cam.position, transform.position);    //  Distance is not optimal. Use sqrMagnitude.
         float vmag = correctedAbsoluteMagnitude - 7.5f + 5 * Mathf.Log10(distance);
-        vmag = 1f - vmag / 6.5f;
-        vmag = Mathf.Clamp(vmag, 0f, 5f); // 5 is way more than the max
+        float visibility = 1f - vmag / 6.5f;
+        visibility = Mathf.Clamp(visibility, 0f, 5f); // 5 is way more than the max
 
         //  Transformations
-        transform.localScale = game.starSize * distance * Vector3.one * (0.75f * vmag + 0.25f);
+        float size = 0.75f * visibility + 0.25f;
+        transform.localScale = game.starSize * distance * Vector3.one * size;
 
-        Color color = trueColor;
-        if (vmag < 0.5f)
+        float alpha;
+        switch (visibility)
         {
-            vmag *= 2f;
-        } else if (vmag < 1f)
-        {
-            vmag = 1f;
+            case float vis when vis < 0.5f:
+                alpha = vis;
+                break;
+            case float vis when vis > 1f:
+                alpha = vis;
+                break;
+            default:
+                alpha = 1f;
+                break;
         }
-        color.a = dimmed ? field.DimAlpha * vmag : vmag;
+        Color color = sprite.color;
+        color.a = dimmed ? field.DimAlpha * alpha : alpha;
         sprite.color = color;
 
         transform.rotation = cam.rotation;
@@ -113,22 +127,28 @@ public class Star : MonoBehaviour
         float distance = Vector3.Distance(cam.position, transform.position);    //  Distance is not optimal. Use sqrMagnitude.
 //float vmag = correctedAbsoluteMagnitude - 7.5f + 5 * Mathf.Log10(field.UnsquishDistance(distance, 4f));
         float vmag = correctedAbsoluteMagnitude - 7.5f + 5 * Mathf.Log10(distance);
-        vmag = 1f - vmag / 6.5f;
-        vmag = Mathf.Clamp(vmag, 0f, 5f); // 5 is way more than the max
+        float visibility = 1f - vmag / 6.5f;
+        visibility = Mathf.Clamp(visibility, 0f, 5f); // 5 is way more than the max
 
         //  Transformations
-        transform.localScale = game.starSize * distance * Vector3.one * (0.75f * vmag + 0.25f);
+        float size = 0.75f * visibility + 0.25f;
+        transform.localScale = game.starSize * distance * Vector3.one * size;
 
-        Color color = trueColor;
-        if (vmag < 0.5f)
+        float alpha;
+        switch (visibility)
         {
-            vmag *= 2f;
+            case float vis when vis < 0.5f:
+                alpha = vis;
+                break;
+            case float vis when vis > 1f:
+                alpha = vis;
+                break;
+            default:
+                alpha = 1f;
+                break;
         }
-        else if (vmag < 1f)
-        {
-            vmag = 1f;
-        }
-        color.a = dimmed ? field.DimAlpha * vmag : vmag;
+        Color color = sprite.color;
+        color.a = dimmed ? field.DimAlpha * alpha : alpha;
         sprite.color = color;
 
         transform.rotation = cam.rotation;

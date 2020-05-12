@@ -5,7 +5,8 @@ using UnityEngine;
 enum Locus
 {
     Planckian,
-    Alto
+    Alto,
+    DramaticPlanckian
 }
 
 [CreateAssetMenu]
@@ -25,12 +26,14 @@ public class Settings : ScriptableObject
     }
 
     [SerializeField]
-    private Locus locus;
+    private Locus locus = Locus.Planckian;
 
     [SerializeField]
-    private Gradient planckianLocus;
+    private Gradient planckianLocus = null;
     [SerializeField]
-    private Gradient altoLocus;
+    private Gradient altoLocus = null;
+    [SerializeField]
+    private Gradient dramaticPlanckianLocus = null;
     public Color ReadLocus(float temperature)
     {
         float temperatureNormalized = temperature / 30000f;
@@ -39,15 +42,22 @@ public class Settings : ScriptableObject
             Debug.LogError($"A star has a temperature of {temperature}, which is outside the range (1K, 30000 K]. The error color is applied.");
             return Color.magenta;
         }
+        Gradient heatingGradient;
         switch (locus)
         {
             case Locus.Planckian:
-                return planckianLocus.Evaluate(temperatureNormalized);
+                heatingGradient = planckianLocus;
+                break;
             case Locus.Alto:
-                return altoLocus.Evaluate(temperatureNormalized);
+                heatingGradient = altoLocus;
+                break;
+            case Locus.DramaticPlanckian:
+                heatingGradient = dramaticPlanckianLocus;
+                break;
             default:
                 return Color.black;
         }
+        return heatingGradient.Evaluate(temperatureNormalized);
     }
     
 }

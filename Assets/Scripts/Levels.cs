@@ -5,7 +5,7 @@ using UnityEngine;
 public class Levels : MonoBehaviour
 {
     [SerializeField, Range(0f, 90f)]
-    float diffractionAngle;
+    float diffractionAngle = 0;
     public float DiffractionAngle { get { return diffractionAngle; } }
 
     public static Levels instance;
