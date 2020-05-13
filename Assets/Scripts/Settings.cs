@@ -26,6 +26,26 @@ public class Settings : ScriptableObject
     }
 
     [SerializeField]
+    private float starReferenceMaxErrorDegrees = 0.01f;
+
+    public float StarReferenceMaxErrorDegrees
+    {
+        get { return starReferenceMaxErrorDegrees; }
+    }
+
+    [SerializeField]
+    private float maxTemp = 0;
+    [SerializeField]
+    private float maxRadians = 0;
+
+    public float TemperatureToDifficulty(float temperature)
+    {
+        float normalizedTemperature = temperature / maxTemp;
+        float normalizedDifficulty = (Mathf.Sqrt(normalizedTemperature) - 0.5f) * 3.1f + 0.5f;
+        return maxRadians * Mathf.Clamp01(normalizedDifficulty);
+    }
+
+    [SerializeField]
     private Locus locus = Locus.Planckian;
 
     [SerializeField]

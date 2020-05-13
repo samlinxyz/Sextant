@@ -5,17 +5,13 @@ using DG.Tweening;
 
 public class StarSublevel : MonoBehaviour
 {
-    [SerializeField, Range(0f, 1f)]
-    private float difficulty;
+    [SerializeField, Range(0f, 10f)]
+    private float difficulty = 0f;
     public float Difficulty
     {
         get 
         {
-            float normalizedTemperature = associatedStar.Temperature / 30000f;
-            float normalizedDifficulty = (Mathf.Sqrt(normalizedTemperature) - 0.5f) * 3.1f + 0.5f;
-            normalizedDifficulty = Mathf.Clamp01(normalizedDifficulty);
-            difficulty = normalizedDifficulty;
-            return normalizedDifficulty;
+            return difficulty;
         }
     }
 
@@ -83,11 +79,11 @@ public class StarSublevel : MonoBehaviour
     }
 
     [SerializeField]
-    private Star associatedStar;
+    private Star associatedStar = null;
     public Star AssociatedStar { get { return associatedStar; } }
 
     //  This sets the reference to the Star associated with this Stage
-    public void FindAssociatedStar()
+    public Star FindAssociatedStar()
     {
         Transform candidateStar = null;
         float closestAngle = 180f;
@@ -101,17 +97,23 @@ public class StarSublevel : MonoBehaviour
             }
         }
 
-        if (closestAngle > 0.01f)
-            Debug.LogWarning($"The star set to be the associated star is more than 0.01 degrees away from stage {this.name}. Check that associated star for {this.name} is correct.");
-        associatedStar = candidateStar.GetComponent<Star>();
+        if (closestAngle > Settings.I.StarReferenceMaxErrorDegrees)
+            Debug.LogWarning($"The star set to be the associated star is more than {Settings.I.StarReferenceMaxErrorDegrees} degrees away from stage {this.name}. Check that associated star for {this.name} is correct.");
+        //associatedStar = candidateStar.GetComponent<Star>();
 
+        /*
         //  Set up the stage to match the star's color and size
         float distance = associatedStar.transform.position.magnitude;
         float vmag = associatedStar.correctedAbsoluteMagnitude - 7.5f + 5 * Mathf.Log10(distance);
         vmag = 1f - vmag / 6.5f;
         vmag = Mathf.Clamp(vmag, 0f, 5f);
+
+        
         diffraction.transform.localScale = 1.5f * Vector3.one * (0.75f * vmag + 0.25f);
         diffraction.color = associatedStar.TrueColor;
+        */
+
+        return candidateStar.GetComponent<Star>();
     }
 
     //  Sets the position of this stage as 200 m in the direction of the associated star's position.

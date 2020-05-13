@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using System.Linq;
 
 [ExecuteInEditMode]
 public class Line : MonoBehaviour
@@ -17,21 +18,24 @@ public class Line : MonoBehaviour
     }
     void Update()
     {
-        //UpdatePosition();
-        
+        UpdatePosition();
     }
+
+    private static float lineWidth = 0.2f;
+    private static float lineDistance = 100f;
 
     public void UpdatePosition()
     {
-        Vector3 position1 = 100f * (star1.position - cam.transform.position).normalized; 
-        Vector3 position2 = 100f * (star2.position - cam.transform.position).normalized;
-        line.startWidth = line.endWidth = 0.2f;
+        line.startWidth = line.endWidth = lineWidth;
 
-        line.SetPositions(new Vector3[] 
-        {
-            transform.InverseTransformPoint(cam.transform.position + position1),
-            transform.InverseTransformPoint(cam.transform.position + position2)
-        } );
+        line.SetPositions(stars.Select(star => CalculateLocalVertexPosition(star.position)).ToArray());
+    }
+
+    private Vector3 CalculateLocalVertexPosition(Vector3 star)
+    {
+        // Calculate the position of the point lineDistance in the direction from the camera to the star.
+        Vector3 worldPosition = lineDistance * (star - cam.transform.position).normalized + cam.transform.position;
+        return transform.InverseTransformPoint(worldPosition);
     }
 
     private Color incompleteColor = Color.Lerp(Color.black, Color.white, 0.2f);
@@ -54,21 +58,21 @@ public class Line : MonoBehaviour
         Color endColor1 = Color.magenta;
         if (starStage1 == null)
         {
-            endColor1 = starStage2.Completed ? star1.GetComponent<SpriteRenderer>().color : incompleteColor;
+            endColor1 = starStage2.Completed ? stars[0].GetComponent<SpriteRenderer>().color : incompleteColor;
         }
         else
         {
-            endColor1 = starStage1.Completed ? star1.GetComponent<SpriteRenderer>().color : incompleteColor;
+            endColor1 = starStage1.Completed ? stars[0].GetComponent<SpriteRenderer>().color : incompleteColor;
         }
         endColor1.a = (endColor1 == incompleteColor)? incompleteAlpha : alpha;
         Color endColor2 = Color.magenta;
         if (starStage2 == null)
         {
-            endColor2 = starStage1.Completed ? star2.GetComponent<SpriteRenderer>().color : incompleteColor;
+            endColor2 = starStage1.Completed ? stars[1].GetComponent<SpriteRenderer>().color : incompleteColor;
         }
         else
         {
-            endColor2 = starStage2.Completed ? star2.GetComponent<SpriteRenderer>().color : incompleteColor;
+            endColor2 = starStage2.Completed ? stars[1].GetComponent<SpriteRenderer>().color : incompleteColor;
         }
         endColor2.a = (endColor2 == incompleteColor) ? incompleteAlpha : alpha;
 
@@ -112,7 +116,7 @@ public class Line : MonoBehaviour
     {
         if (starStage1 == null && starStage2 == null)
         {
-            Debug.LogError("The constellation line does not connect to at least one starStage. Make sure you have manually set references to the levels.");
+            Debug.LogError($"Line {transform.GetSiblingIndex()} of {transform.parent.name} does not reference at least one starStage. Make sure you have manually set references to the levels.");
             return;
         }
 
@@ -124,20 +128,20 @@ public class Line : MonoBehaviour
         Color endColor1 = Color.magenta;
         if (starStage1 == null)
         {
-            endColor1 = starStage2.Completed ? star1.GetComponent<SpriteRenderer>().color : incompleteColor;
+            endColor1 = starStage2.Completed ? stars[0].GetComponent<SpriteRenderer>().color : incompleteColor;
         }
         else
         {
-            endColor1 = starStage1.Completed ? star1.GetComponent<SpriteRenderer>().color : incompleteColor;
+            endColor1 = starStage1.Completed ? stars[0].GetComponent<SpriteRenderer>().color : incompleteColor;
         }
         Color endColor2 = Color.magenta;
         if (starStage2 == null)
         {
-            endColor2 = starStage1.Completed ? star2.GetComponent<SpriteRenderer>().color : incompleteColor;
+            endColor2 = starStage1.Completed ? stars[1].GetComponent<SpriteRenderer>().color : incompleteColor;
         }
         else
         {
-            endColor2 = starStage2.Completed ? star2.GetComponent<SpriteRenderer>().color : incompleteColor;
+            endColor2 = starStage2.Completed ? stars[1].GetComponent<SpriteRenderer>().color : incompleteColor;
         }
 
         Gradient gradient = new Gradient();
@@ -159,16 +163,14 @@ public class Line : MonoBehaviour
     }
 
     [SerializeField]
-    private Transform star1;
-    [SerializeField]
-    private Transform star2;
+    public Transform[] stars;
 
     [SerializeField]
     private StarSublevel starStage1;
     [SerializeField]
     private StarSublevel starStage2;
 
-    public bool SetStarReferences(GameObject[] stars, StarSublevel[] stages)
+    public bool SetStarReferences(GameObject[] selectedStars, StarSublevel[] stages)
     {
         if (stars.Length != 2)
         {
@@ -178,10 +180,11 @@ public class Line : MonoBehaviour
         if (stages.Length != 2)
         {
             Debug.LogError("what the hell did you do?");
+            return false;
         }
 
-        star1 = stars[0].transform;
-        star2 = stars[1].transform;
+        stars[0] = selectedStars[0].transform;
+        stars[1] = selectedStars[1].transform;
 
         starStage1 = stages[0];
         starStage2 = stages[1];
@@ -191,40 +194,34 @@ public class Line : MonoBehaviour
 
 
     //  This sets the reference to the Star associated with this Stage
-    public void FindAssociatedStars()
+    public Transform[] FindAssociatedStars()
     {
-        Transform candidateStar = null;
+        Transform[] stars = new Transform[2]
+        {
+            FindStarAt(line.GetPosition(0)),
+            FindStarAt(line.GetPosition(1))
+        };
+
+        return stars;
+    }
+
+    private Transform FindStarAt(Vector3 vertex)
+    {
+        Transform candidate = null;
         float closestAngle = 180f;
         foreach (Transform star in StarField.StarTransformArray())
         {
-            float angle = Vector3.Angle(line.GetPosition(0), star.position);
+            float angle = Vector3.Angle(vertex, star.position);
             if (closestAngle > angle)
             {
-                candidateStar = star;
+                candidate = star;
                 closestAngle = angle;
             }
         }
 
-        if (closestAngle > 0.01f)
-            Debug.LogWarning($"The star set to be the associated star is more than 0.01 degrees away from end 1 of {this.name}. Check that associated star for {this.name} is correct.");
-        star1 = candidateStar;
+        if (closestAngle > Settings.I.StarReferenceMaxErrorDegrees)
+            Debug.LogWarning($"The associated star is more than {Settings.I.StarReferenceMaxErrorDegrees} degrees away from an end of {this.name} {transform.GetSiblingIndex()} of {transform.parent.name}.");
 
-        candidateStar = null;
-        closestAngle = 180f;
-        foreach (Transform star in StarField.StarTransformArray())
-        {
-            float angle = Vector3.Angle(line.GetPosition(1), star.position);
-            if (closestAngle > angle)
-            {
-                candidateStar = star;
-                closestAngle = angle;
-            }
-        }
-
-        if (closestAngle > 0.01f)
-            Debug.LogWarning($"The star set to be the associated star is more than 0.01 degrees away from end 2 of {this.name}. Check that associated star for {this.name} is correct.");
-        star2 = candidateStar;
-
-        UpdatePosition();
+        return candidate;
     }
 }

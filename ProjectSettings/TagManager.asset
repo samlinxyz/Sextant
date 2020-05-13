@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Game Manager
   - Star
+  - Line
+  - Stage
   layers:
   - Default
   - TransparentFX

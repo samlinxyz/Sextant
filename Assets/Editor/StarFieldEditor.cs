@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System.IO;
+using System.Linq;
 
 [CustomEditor(typeof(StarFieldManager))]
 public class StarFieldEditor : Editor
@@ -53,30 +54,69 @@ public class StarFieldEditor : Editor
                 star.transform.rotation = Quaternion.LookRotation(positionData);
             }
 
-            //  Reset the star references for all stages and lines.
-            foreach (StarSublevel stage in field.transform.parent.GetComponentsInChildren<StarSublevel>())
-            {
-                stage.FindAssociatedStar();
-            }
-            foreach (Line line in field.transform.parent.GetComponentsInChildren<Line>())
-            {
-                line.FindAssociatedStars();
-            }
+            SetStarReferences();
         }
 
-        if (GUILayout.Button("Delete stars (will take a while)"))
+        if (GUILayout.Button("Delete all stars"))
         {
             //  Record changes to the undo stack.
-            Undo.RegisterFullObjectHierarchyUndo(field.gameObject, "Delete Stars");
+            Undo.RegisterFullObjectHierarchyUndo(field.gameObject, "Delete All Stars");
 
-            //  Delete the children.
-            int childCount = field.transform.childCount;
-            for (int i = 0; i < childCount; i++)
-            {
-                DestroyImmediate(field.transform.GetChild(childCount - i - 1).gameObject);
-            }
+            DeleteAllStars();
         }
 
         GUILayout.EndHorizontal();
+
+        if (GUILayout.Button("Set star references"))
+        {
+            SetStarReferences();
+        }
+        if (GUILayout.Button("Update stage difficulties"))
+        {
+            UpdateStageDifficulties();
+        }
+    }
+
+    //  Reset the star references for all stages and lines.
+    private void SetStarReferences()
+    {
+        StarSublevel[] allStages = GameObject.FindGameObjectsWithTag("Stage").Select(go => go.GetComponent<StarSublevel>()).ToArray();
+        foreach (StarSublevel stage in allStages)
+        {
+            SerializedObject so = new SerializedObject(stage);
+            so.FindProperty("associatedStar").objectReferenceValue = stage.FindAssociatedStar();
+            so.ApplyModifiedProperties();
+        }
+
+        Line[] allLines = GameObject.FindGameObjectsWithTag("Line").Select(go => go.GetComponent<Line>()).ToArray();
+        foreach (Line line in allLines)
+        {
+            SerializedObject so = new SerializedObject(line);
+            Transform[] starsFound = line.FindAssociatedStars();
+            so.FindProperty("stars").GetArrayElementAtIndex(0).objectReferenceValue = starsFound[0];
+            so.FindProperty("stars").GetArrayElementAtIndex(1).objectReferenceValue = starsFound[1];
+            so.ApplyModifiedProperties();
+        }
+    }
+
+    private void UpdateStageDifficulties()
+    {
+        StarSublevel[] allStages = GameObject.FindGameObjectsWithTag("Stage").Select(go => go.GetComponent<StarSublevel>()).ToArray();
+        foreach (StarSublevel stage in allStages)
+        {
+            SerializedObject so = new SerializedObject(stage);
+            so.FindProperty("difficulty").floatValue = Settings.I.TemperatureToDifficulty(stage.AssociatedStar.Temperature);
+            so.ApplyModifiedProperties();
+        }
+    }
+
+    private void DeleteAllStars()
+    {
+        GameObject[] allStars = GameObject.FindGameObjectsWithTag("Star");
+        int starCount = allStars.Length;
+        for (int i = 0; i < starCount; i++)
+        {
+            DestroyImmediate(allStars[starCount - 1 - i]);
+        }
     }
 }

@@ -91,11 +91,15 @@ public class Star : MonoBehaviour
         squished = false;
     }
 
+    public float VmagAt(float distance)
+    {
+        return correctedAbsoluteMagnitude - 7.5f + 5 * Mathf.Log10(distance);
+    }
+
     public void UpdateTransform()
     {
         float distance = Vector3.Distance(cam.position, transform.position);    //  Distance is not optimal. Use sqrMagnitude.
-        float vmag = correctedAbsoluteMagnitude - 7.5f + 5 * Mathf.Log10(distance);
-        float visibility = 1f - vmag / 6.5f;
+        float visibility = 1f - VmagAt(distance) / 6.5f;
         visibility = Mathf.Clamp(visibility, 0f, 5f); // 5 is way more than the max
 
         //  Transformations
@@ -106,7 +110,7 @@ public class Star : MonoBehaviour
         switch (visibility)
         {
             case float vis when vis < 0.5f:
-                alpha = vis;
+                alpha = 2f * vis;
                 break;
             case float vis when vis > 1f:
                 alpha = vis;
@@ -125,9 +129,8 @@ public class Star : MonoBehaviour
     public void UpdateTransformExaggerated()
     {
         float distance = Vector3.Distance(cam.position, transform.position);    //  Distance is not optimal. Use sqrMagnitude.
-//float vmag = correctedAbsoluteMagnitude - 7.5f + 5 * Mathf.Log10(field.UnsquishDistance(distance, 4f));
-        float vmag = correctedAbsoluteMagnitude - 7.5f + 5 * Mathf.Log10(distance);
-        float visibility = 1f - vmag / 6.5f;
+        //float vmag = correctedAbsoluteMagnitude - 7.5f + 5 * Mathf.Log10(field.UnsquishDistance(distance, 4f));
+        float visibility = 1f - VmagAt(distance) / 6.5f;
         visibility = Mathf.Clamp(visibility, 0f, 5f); // 5 is way more than the max
 
         //  Transformations
@@ -138,7 +141,7 @@ public class Star : MonoBehaviour
         switch (visibility)
         {
             case float vis when vis < 0.5f:
-                alpha = vis;
+                alpha = 2f * vis;
                 break;
             case float vis when vis > 1f:
                 alpha = vis;

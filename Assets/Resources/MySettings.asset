@@ -12,6 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd28fd01d6e0a34458d3195856984c7a, type: 3}
   m_Name: MySettings
   m_EditorClassIdentifier: 
+  starReferenceMaxErrorDegrees: 0.02
+  maxTemp: 30000
+  maxRadians: 10
   locus: 0
   planckianLocus:
     serializedVersion: 2
