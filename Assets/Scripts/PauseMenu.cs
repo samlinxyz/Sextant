@@ -5,10 +5,14 @@ using UnityEngine;
 public class PauseMenu : MonoBehaviour
 {
     private static bool paused = false;
+    [SerializeField]
+    private GameObject pauseMenu = null;
+    [SerializeField]
+    private GameObject playCanvas = null;
 
     void Update()
     {
-        if (Input.GetKey(KeyCode.BackQuote))
+        if (Input.GetKeyDown(KeyCode.P) && Player.allowMovement)
         {
             TogglePause();
         }
@@ -16,15 +20,35 @@ public class PauseMenu : MonoBehaviour
 
     private void TogglePause()
     {
-        if (!paused)
+        if (paused)
         {
-            Time.timeScale = 0f;
-            paused = true;
+            Resume();
+            playCanvas.SetActive(true);
         }
         else
         {
-            Time.timeScale = 1f;
-            paused = false;
+            Pause();
+            playCanvas.SetActive(false);
         }
+    }
+
+    public void Pause()
+    {
+        Time.timeScale = 0f;
+        pauseMenu.SetActive(true);
+        paused = true;
+    }
+
+    public void Resume()
+    {
+        Time.timeScale = 1f;
+        pauseMenu.SetActive(false);
+        paused = false;
+    }
+
+    public void ReturnToLevel()
+    {
+        GameManager.instance.ReturnToLevel();
+        Resume();
     }
 }

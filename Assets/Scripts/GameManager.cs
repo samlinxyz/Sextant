@@ -6,14 +6,6 @@ using System.IO;
 using TMPro;
 using DG.Tweening;
 
-
-public enum LevelProgress
-{
-    Zero,
-    Partial,
-    Complete
-}
-
 public enum GameState
 {
     Sky,    //  When the player is looking around at all the constellations

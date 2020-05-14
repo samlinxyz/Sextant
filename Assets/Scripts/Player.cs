@@ -53,7 +53,7 @@ public class Player : MonoBehaviour
         }
     }
 
-    public bool allowMovement = false;
+    public static bool allowMovement = false;
     public float speed;
     public void Move()
     {
