@@ -2,6 +2,7 @@
 using UnityEditor;
 using System.IO;
 using System.Linq;
+using Supyrb;
 
 [CustomEditor(typeof(StarFieldManager))]
 public class StarFieldEditor : Editor
@@ -18,7 +19,7 @@ public class StarFieldEditor : Editor
         if (GUILayout.Button("Load stars"))
         {
             //  Record following changes to the undo stack.
-            Undo.RegisterFullObjectHierarchyUndo(field.transform.parent.gameObject, "Load Stars");
+            Undo.RegisterFullObjectHierarchyUndo(field.gameObject, "Load Stars");
 
             LoadStars(field);
 
@@ -96,8 +97,9 @@ public class StarFieldEditor : Editor
         {
             SerializedObject so = new SerializedObject(line);
             Transform[] starsFound = line.FindAssociatedStars();
-            so.FindProperty("stars").GetArrayElementAtIndex(0).objectReferenceValue = starsFound[0];
-            so.FindProperty("stars").GetArrayElementAtIndex(1).objectReferenceValue = starsFound[1];
+            so.FindProperty("starTransforms").arraySize = 2;
+            so.FindProperty("starTransforms").GetArrayElementAtIndex(0).objectReferenceValue = starsFound[0];
+            so.FindProperty("starTransforms").GetArrayElementAtIndex(1).objectReferenceValue = starsFound[1];
             so.ApplyModifiedProperties();
         }
     }

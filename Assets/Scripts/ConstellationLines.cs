@@ -13,7 +13,6 @@ public class ConstellationLines : MonoBehaviour
     public float gizmosAlpha;
     public bool showDelete;
 
-    
     public bool transformVertices;
 
     [SerializeField, Range(1f, 50f)]
@@ -24,6 +23,11 @@ public class ConstellationLines : MonoBehaviour
     }
     public float fieldOfView;
     public float zRotation;
+
+    public float Distance 
+    { 
+        get { return transform.localPosition.magnitude; } 
+    }
 
     [SerializeField]
     private StarSublevel[] stages = null;
@@ -123,18 +127,40 @@ public class ConstellationLines : MonoBehaviour
         if (game.state == GameState.Sky && game.mouseSky.dragged == false && !UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) game.SelectLevel(transform);
     }
 
-    public void OnDrawGizmos()
+    #region Gizmos
+    public void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.white * gizmosAlpha;
+        DrawLines();
+
+        Gizmos.color = Color.green * gizmosAlpha;
+        DrawStartingPoints();
+
+        Gizmos.color = Color.gray * gizmosAlpha;
+        Gizmos.DrawWireSphere(transform.position, transform.position.magnitude);
+    }
+
+    private void DrawLines()
+    {
         for (int i = 0; i < vertices.Count; i += 2)
         {
             if (transformVertices)
-                Gizmos.DrawLine(StarFieldManager.SquishPosition(vertices[i], squishFactor), StarFieldManager.SquishPosition(vertices[i + 1], squishFactor));
+                Gizmos.DrawLine(StarFieldManager.SquishPositionLinear(squishParameters, vertices[i]), StarFieldManager.SquishPositionLinear(squishParameters, vertices[i+1]));
             else
                 Gizmos.DrawLine(vertices[i], vertices[i + 1]);
         }
     }
 
+    private void DrawStartingPoints()
+    {
+        foreach (StarSublevel stage in Stages)
+        {
+            // Projects starting point of stars onto the player movement sphere.
+            Vector3 projectedLocation = (StarFieldManager.SquishPositionLinear(squishParameters, stage.AssociatedStar.TruePosition) - transform.position).normalized * transform.position.magnitude + transform.position;
+            Gizmos.DrawSphere(projectedLocation, 10f);
+        }
+    }
+    #endregion
 
     public void AddLine(Vector3 start, Vector3 end)
     {
@@ -155,6 +181,7 @@ public class ConstellationLines : MonoBehaviour
         public float FieldOfView
         {
             get { return fieldOfView; }
+            private set { fieldOfView = value; }
         }
 
         [SerializeField]
@@ -162,12 +189,13 @@ public class ConstellationLines : MonoBehaviour
         public float ZRotation
         {
             get { return zRotation; }
+            private set { zRotation = value; }
         }
 
-        public Frame(float fov, float zEuler)
+        public Frame(float fieldOfView, float zRotation)
         {
-            fieldOfView = fov;
-            zRotation = zEuler;
+            FieldOfView = fieldOfView;
+            ZRotation = zRotation;
         }
     }
 
@@ -186,5 +214,12 @@ public class ConstellationLines : MonoBehaviour
     public void EnableColliderButton(bool enable)
     {
         levelSphere.enabled = enable;
+    }
+
+    [SerializeField]
+    private StarFieldManager.SquishParameters squishParameters = null;
+    public StarFieldManager.SquishParameters SquishParameters
+    {
+        get { return squishParameters; }
     }
 }

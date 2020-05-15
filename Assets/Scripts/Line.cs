@@ -28,7 +28,7 @@ public class Line : MonoBehaviour
     {
         line.startWidth = line.endWidth = lineWidth;
 
-        line.SetPositions(stars.Select(star => CalculateLocalVertexPosition(star.position)).ToArray());
+        line.SetPositions(starTransforms.Select(star => CalculateLocalVertexPosition(star.position)).ToArray());
     }
 
     private Vector3 CalculateLocalVertexPosition(Vector3 starPosition)
@@ -58,21 +58,21 @@ public class Line : MonoBehaviour
         Color endColor1 = Color.magenta;
         if (starStage1 == null)
         {
-            endColor1 = starStage2.Completed ? stars[0].GetComponent<SpriteRenderer>().color : incompleteColor;
+            endColor1 = starStage2.Completed ? starTransforms[0].GetComponent<SpriteRenderer>().color : incompleteColor;
         }
         else
         {
-            endColor1 = starStage1.Completed ? stars[0].GetComponent<SpriteRenderer>().color : incompleteColor;
+            endColor1 = starStage1.Completed ? starTransforms[0].GetComponent<SpriteRenderer>().color : incompleteColor;
         }
         endColor1.a = (endColor1 == incompleteColor)? incompleteAlpha : alpha;
         Color endColor2 = Color.magenta;
         if (starStage2 == null)
         {
-            endColor2 = starStage1.Completed ? stars[1].GetComponent<SpriteRenderer>().color : incompleteColor;
+            endColor2 = starStage1.Completed ? starTransforms[1].GetComponent<SpriteRenderer>().color : incompleteColor;
         }
         else
         {
-            endColor2 = starStage2.Completed ? stars[1].GetComponent<SpriteRenderer>().color : incompleteColor;
+            endColor2 = starStage2.Completed ? starTransforms[1].GetComponent<SpriteRenderer>().color : incompleteColor;
         }
         endColor2.a = (endColor2 == incompleteColor) ? incompleteAlpha : alpha;
 
@@ -128,20 +128,20 @@ public class Line : MonoBehaviour
         Color endColor1 = Color.magenta;
         if (starStage1 == null)
         {
-            endColor1 = starStage2.Completed ? stars[0].GetComponent<SpriteRenderer>().color : incompleteColor;
+            endColor1 = starStage2.Completed ? starTransforms[0].GetComponent<SpriteRenderer>().color : incompleteColor;
         }
         else
         {
-            endColor1 = starStage1.Completed ? stars[0].GetComponent<SpriteRenderer>().color : incompleteColor;
+            endColor1 = starStage1.Completed ? starTransforms[0].GetComponent<SpriteRenderer>().color : incompleteColor;
         }
         Color endColor2 = Color.magenta;
         if (starStage2 == null)
         {
-            endColor2 = starStage1.Completed ? stars[1].GetComponent<SpriteRenderer>().color : incompleteColor;
+            endColor2 = starStage1.Completed ? starTransforms[1].GetComponent<SpriteRenderer>().color : incompleteColor;
         }
         else
         {
-            endColor2 = starStage2.Completed ? stars[1].GetComponent<SpriteRenderer>().color : incompleteColor;
+            endColor2 = starStage2.Completed ? starTransforms[1].GetComponent<SpriteRenderer>().color : incompleteColor;
         }
 
         Gradient gradient = new Gradient();
@@ -163,7 +163,11 @@ public class Line : MonoBehaviour
     }
 
     [SerializeField]
-    public Transform[] stars;
+    private Transform[] starTransforms = new Transform[2];
+    public Transform[] StarTransforms
+    {
+        get { return starTransforms; }
+    }
 
     [SerializeField]
     private StarSublevel starStage1;
@@ -172,7 +176,7 @@ public class Line : MonoBehaviour
 
     public bool SetStarReferences(GameObject[] selectedStars, StarSublevel[] stages)
     {
-        if (stars.Length != 2)
+        if (starTransforms.Length != 2)
         {
             Debug.LogError("Star references not set in Line. You are not assigning 2 references, which is the only sensible number of references for a line! The references were not assigned.");
             return false;
@@ -183,8 +187,8 @@ public class Line : MonoBehaviour
             return false;
         }
 
-        stars[0] = selectedStars[0].transform;
-        stars[1] = selectedStars[1].transform;
+        starTransforms[0] = selectedStars[0].transform;
+        starTransforms[1] = selectedStars[1].transform;
 
         starStage1 = stages[0];
         starStage2 = stages[1];

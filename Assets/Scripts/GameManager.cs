@@ -171,9 +171,9 @@ public class GameManager : MonoBehaviour
         levelSelectionCanvas.DOFade(0f, 0.5f).OnComplete(() => levelSelectionCanvas.gameObject.SetActive(false));
         stageSelectionCanvas.DOFade(0f, 0.5f).OnComplete(() => stageSelectionCanvas.gameObject.SetActive(false));
 
-        field.DimStarsOutside(level, true);
-
         ConstellationLines lines = level.GetComponent<ConstellationLines>();
+
+        field.DimStarsOutside(lines, true);
 
         lines.ShowStages(false);
 
@@ -186,7 +186,7 @@ public class GameManager : MonoBehaviour
         }
         //  Adjust the stars to the squish factor of the selected constellation
 
-        field.SquishStarsAround(level, true);
+        field.SquishStarsAround(lines);
 
         player.GetComponent<Player>().ConfigureLevelCameraAround(level, stage);
 
@@ -217,10 +217,8 @@ public class GameManager : MonoBehaviour
             }))
             .AppendCallback(() =>
             {
-                player.transform.position = Vector3.zero;
-                player.transform.rotation = Quaternion.identity;
-                cam.transform.position = Vector3.zero;
-                cam.transform.rotation = Quaternion.LookRotation(level.position, level.up);
+                player.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+                cam.transform.SetPositionAndRotation(Vector3.zero, Quaternion.LookRotation(level.position, level.up));
 
                 ground.height = 1f;
                 ground.gameObject.SetActive(true);
@@ -309,14 +307,16 @@ public class GameManager : MonoBehaviour
         cameraFOVAnimation = DOTween.To(x => cam.fieldOfView = x, cam.fieldOfView, skyViewFOV, zoomDuration);
         DOTween.To(x => starSize = x, starSize, referenceStarSize, zoomDuration);
 
+        ConstellationLines lines = level.GetComponent<ConstellationLines>();
+
         //  The dimmed stars return to regular brightness.
-        field.DimStarsOutside(level, false);
+        field.DimStarsOutside(lines, true);
 
         //  The stars' normal positions are loaded
         //  This doesn't have to be done when the function is called when a player is just looking at constellations, but it is currently.
-        field.SquishStarsAround(level, false);
+        field.ConfigureStarsTransform();
 
-        level.GetComponent<ConstellationLines>().ShowStages(false);
+        lines.ShowStages(false);
 
         //mouseSky.SetTarget(constellatio)
         mouseSky.enabled = true;

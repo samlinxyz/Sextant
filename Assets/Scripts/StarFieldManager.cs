@@ -18,55 +18,57 @@ public class StarFieldManager : MonoBehaviour
     private float dimAlpha = 0.5f;
     public float DimAlpha { get { return dimAlpha; } }
 
+    private Star[] stars = null;
+    public Star[] Stars
+    {
+        get
+        {
+            if (stars == null || stars.Length == 0)
+            {
+                stars = GetComponentsInChildren<Star>();
+            }
+            return stars;
+        }
+    }
+
     void Awake()
     {
         instance = this;
     }
 
     //  Creates the original positions of the stars
-    public void ConfigureStarsTransform()
+        public void ConfigureStarsTransform()
     {
-        foreach (Transform star in transform)
+        foreach (Star star in GetComponentsInChildren<Star>())
         {
-            star.GetComponent<Star>().ConfigureTransform();
-            star.GetComponent<Star>().UpdateTransform();
+            star.ConfigureTransform();
+            star.UpdateTransform();
         }
     }
 
-    public void SquishStarsAround(Transform level, bool squish)
+    public void SquishStarsAround(ConstellationLines level)
     {
-        float angle = Mathf.Asin(level.GetComponent<ConstellationLines>().LevelRadius / level.position.magnitude);
-        foreach (Transform star in transform)
+        float angle = Mathf.Asin(level.LevelRadius / level.Distance);
+        foreach (Star star in Stars)
         {
-            //  If the star is within the constellation, apply the transform.
-            if (Vector3.Angle(star.position, level.position) <= Mathf.Rad2Deg * angle)
+            if (Vector3.Angle(star.TruePosition, level.transform.localPosition) <= Mathf.Rad2Deg * angle)
             {
-                if (squish)
-                {
-                    star.GetComponent<Star>().ConfigureSquishedTransform(level.GetComponent<ConstellationLines>().SquishFactor);
-                    star.GetComponent<Star>().UpdateTransformExaggerated();
-
-                }
-                else
-                {
-                    star.GetComponent<Star>().ConfigureTransform();
-                    star.GetComponent<Star>().UpdateTransform();
-                }
+                star.ConfigureSquishedTransform(level.SquishParameters);
+                star.UpdateTransformExaggerated();
             }
         }
     }
 
-    public void DimStarsOutside(Transform level, bool dim)
+    public void DimStarsOutside(ConstellationLines level, bool dim)
     {
-        float angle = Mathf.Asin(level.GetComponent<ConstellationLines>().LevelRadius / level.position.magnitude);
-        foreach (Transform star in transform)
+        float angle = Mathf.Asin(level.GetComponent<ConstellationLines>().LevelRadius / level.Distance);
+        foreach (Star star in Stars)
         {
-            //  If the star is within the size  of the direction that the camera faces, apply the transform.
-            if (Vector3.Angle(star.position, level.position) > Mathf.Rad2Deg * angle)
+            if (Vector3.Angle(star.TruePosition, level.transform.localPosition) > Mathf.Rad2Deg * angle)
             {
-                star.GetComponent<Star>().DimStarColor(dim);
+                star.DimStarColor(dim);
             }
-            star.GetComponent<Star>().UpdateTransform();
+            star.UpdateTransform();
         }
     }
 
@@ -92,4 +94,43 @@ public class StarFieldManager : MonoBehaviour
         return median * Mathf.Pow(squishedDistance, squishFactor);
     }
     #endregion
+
+    [System.Serializable]
+    public class SquishParameters
+    {
+        [SerializeField]
+        private float radialCompression = 1f;
+        public float RadialCompression
+        {
+            get { return radialCompression; }
+            private set { radialCompression = value; }
+        }
+
+        [SerializeField]
+        private float minRadius = 0f;
+        public float MinRadius
+        {
+            get { return minRadius; }
+            private set { minRadius = value; }
+        }
+
+        public SquishParameters(float radialCompression, float minRadius)
+        {
+            RadialCompression = radialCompression;
+            MinRadius = minRadius;
+        }
+
+        public SquishParameters() { }
+    }
+
+    public static Vector3 SquishPositionLinear(SquishParameters parameters, Vector3 initialPosition)
+    {
+        if (parameters == null)
+        {
+            Debug.LogError("Parameters have not been initialized for this constellation, and the identity transformation has been applied.");
+            parameters = new SquishParameters();
+        }
+
+        return initialPosition / parameters.RadialCompression + parameters.MinRadius * initialPosition.normalized;
+    }
 }

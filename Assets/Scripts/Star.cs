@@ -146,6 +146,7 @@ public class Star : MonoBehaviour
         transform.rotation = cam.rotation;
     }
 
+    // currently this does the exact same thing as UpdateTransform. Why?
     public void UpdateTransformExaggerated()
     {
         float distance = Vector3.Distance(cam.position, transform.position);    //  Distance is not optimal. Use sqrMagnitude.
@@ -177,28 +178,17 @@ public class Star : MonoBehaviour
         transform.rotation = cam.rotation;
     } 
 
-    public void ConfigureSquishedTransform(float squishFactor)
+    public void ConfigureSquishedTransform(StarFieldManager.SquishParameters parameters)
     {
         //  Use absolute magnitude to calculate vmag, and then perform a spatial transformation. Calculate the strange absolute magnitude.
 
-        float distance = truePosition.magnitude;    //  magnitude is not optimal. Consider using sqrMagnitude.
+        float distance = truePosition.magnitude;
 
-        //  This is the formula when distance is measured in lightyears.
         float vmag = absoluteMagnitude - 7.5f + 5 * Mathf.Log10(distance);
 
-        float strangeDistance = StarFieldManager.SquishDistance(distance, squishFactor);
-        
+        transform.localPosition = StarFieldManager.SquishPositionLinear(parameters, truePosition);
 
-        transform.localPosition = strangeDistance * truePosition.normalized;
-
-
-        //  Calculate the star's absolute brightness given relative brightness if the star is strangeDistance away from the origin.
-        //correctedAbsoluteMagnitude = vmag + 7.5f - 5 * Mathf.Log10(strangeDistance);
-
-        //  Calculate the star's absolute brightness given relative brightness if the star is strangeDistance away from the origin. The last bit compensates for the fact that we want to exaggerate star brightness.
-        //correctedAbsoluteMagnitude = vmag + 7.5f - 5 * Mathf.Log10(field.UnsquishDistance(strangeDistance, 4f));
-        //  Ok we don't actually want to exaggerate star brightness.
-        correctedAbsoluteMagnitude = vmag + 7.5f - 5 * Mathf.Log10(strangeDistance);
+        correctedAbsoluteMagnitude = vmag + 7.5f - 5 * Mathf.Log10(transform.localPosition.magnitude);
 
         squished = true;
     }

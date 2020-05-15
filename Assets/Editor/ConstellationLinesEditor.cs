@@ -14,7 +14,7 @@ public class ConstellationLinesEditor : Editor
 
         // The camera FOV and orientation that the camera zooms to when it looks at the constellation.
         // zoom and rotation characteristic view frame 
-        if (GUILayout.Button("Set frame to scene"))
+        if (GUILayout.Button("Set frame to scene (does not work because SetValue)"))
         {
             SetFrameFor(lines);
         }
@@ -31,20 +31,30 @@ public class ConstellationLinesEditor : Editor
         */
 
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Transform starfield (wip)")) TransformStarsAround(lines.transform);
-        if (GUILayout.Button("Reset starfield (wip)")) ResetStarPositions();
+        if (GUILayout.Button("Transform starfield")) TransformStarsAround(lines);
+        if (GUILayout.Button("Reset starfield")) ResetStarPositions();
         EditorGUILayout.EndHorizontal();
 
-        if (GUILayout.Button("Normalize Stage Positions")) NormalizeStagePositions(lines);
+        if (GUILayout.Button("Normalize stage positions")) NormalizeStagePositions(lines);
     }
 
-    private void TransformStarsAround(Transform constellation)
+    private void TransformStarsAround(ConstellationLines constellation)
     {
-        Undo.RegisterFullObjectHierarchyUndo(GameObject.FindGameObjectWithTag("StarField"), $"Transform around {constellation.name}.");
+        Undo.RegisterFullObjectHierarchyUndo(GameObject.FindGameObjectWithTag("StarField"), $"Transform Around {constellation.name}");
         
-        Transform[] stars = StarField.StarTransformArray();
-        
-        // modify the positions
+        Star[] stars = StarField.StarArray();
+
+        float angle = Mathf.Asin(constellation.LevelRadius / constellation.Distance);
+        foreach (Star star in stars)
+        {
+            //  If the star is within the constellation, apply the transform.
+            if (Vector3.Angle(star.TruePosition, constellation.transform.localPosition) <= Mathf.Rad2Deg * angle)
+            {
+                star.ConfigureSquishedTransform(constellation.SquishParameters);
+                star.UpdateTransformExaggerated();
+                star.transform.rotation = Quaternion.LookRotation(star.transform.position);
+            }
+        }
     }
 
     private void ResetStarPositions()
@@ -55,7 +65,7 @@ public class ConstellationLinesEditor : Editor
 
         foreach (Star star in stars)
         {
-            star.transform.position = star.TruePosition;
+            star.transform.localPosition = star.TruePosition;
         }
     }
 
@@ -94,12 +104,10 @@ public class ConstellationLinesEditor : Editor
 
     public void NormalizeStagePositions(ConstellationLines level)
     {
-        //  Sets the position of each stage to 200 m in the direction of the associated star's position from the origin.
-        foreach (StarSublevel stage in level.GetComponentsInChildren<StarSublevel>())
+        Undo.RegisterFullObjectHierarchyUndo(level.gameObject, "Normalize Stage Positions");
+        foreach (StarSublevel stage in level.Stages)
         {
-            SerializedObject so = new SerializedObject(stage.transform);
-            so.FindProperty("position").vector3Value = 200f * stage.AssociatedStar.transform.position.normalized;
-            so.ApplyModifiedProperties();
+            stage.transform.position = 200f * stage.AssociatedStar.TruePosition.normalized;
         }
     }
 }
