@@ -12,9 +12,7 @@ public class StarFieldEditor : Editor
 
         base.OnInspectorGUI();
 
-        GUILayout.BeginHorizontal();
         if (GUILayout.Button("Configure Stars Transform")) field.ConfigureStarsTransform();
-        GUILayout.EndHorizontal();
 
         GUILayout.BeginHorizontal();
         if (GUILayout.Button("Load stars"))
@@ -22,37 +20,7 @@ public class StarFieldEditor : Editor
             //  Record following changes to the undo stack.
             Undo.RegisterFullObjectHierarchyUndo(field.transform.parent.gameObject, "Load Stars");
 
-            //  Loads data about position, color, and absolute magnitude of all stars from a csv.
-            string starInfoArray = File.ReadAllText(Application.dataPath + "/Resources/Stars - GameData.csv");
-            starInfoArray.Replace("\r", null);
-
-            foreach (string starInfo in starInfoArray.Split('\n'))
-            {
-                string[] dataEntry = starInfo.Split(',');
-
-                //  Instantiate star
-                GameObject starObject = Instantiate(field.starPrefab, field.transform);
-                starObject.tag = "Star";
-                Star star = starObject.GetComponent<Star>();
-
-                //  Set references
-                star.game = field.game;
-                star.cam = field.mainCamera.transform;
-                star.field = field;
-
-                //  Set position and parameters
-                Vector3 positionData = new Vector3(float.Parse(dataEntry[0]), float.Parse(dataEntry[1]), float.Parse(dataEntry[2]));
-                star.transform.position = star.truePosition = positionData;
-                star.Temperature = float.Parse(dataEntry[3]);
-                star.absoluteMagnitude = float.Parse(dataEntry[4]);
-
-                //  Properly size and rotate star sprite.
-                star.ConfigureTransform();
-                star.UpdateTransform();
-
-                //  Update Transform sets rotation equal to camera rotation, so rotation must be performed here.
-                star.transform.rotation = Quaternion.LookRotation(positionData);
-            }
+            LoadStars(field);
 
             SetStarReferences();
         }
@@ -74,6 +42,41 @@ public class StarFieldEditor : Editor
         if (GUILayout.Button("Update stage difficulties"))
         {
             UpdateStageDifficulties();
+        }
+    }
+
+    private void LoadStars(StarFieldManager field)
+    {
+        //  Loads data about position, color, and absolute magnitude of all stars from a csv.
+        string starInfoArray = File.ReadAllText(Application.dataPath + "/Resources/Stars - GameData.csv");
+        starInfoArray.Replace("\r", null);
+
+        foreach (string starInfo in starInfoArray.Split('\n'))
+        {
+            string[] dataEntry = starInfo.Split(',');
+
+            //  Instantiate star
+            GameObject starObject = Instantiate(field.starPrefab, field.transform);
+            starObject.tag = "Star";
+            Star star = starObject.GetComponent<Star>();
+
+            //  Set references
+            star.game = field.game;
+            star.cam = field.mainCamera.transform;
+            star.field = field;
+
+            //  Set position and parameters
+            Vector3 positionData = new Vector3(float.Parse(dataEntry[0]), float.Parse(dataEntry[1]), float.Parse(dataEntry[2]));
+            star.TruePosition = positionData;
+            star.Temperature = float.Parse(dataEntry[3]);
+            star.absoluteMagnitude = float.Parse(dataEntry[4]);
+
+            //  Properly size and rotate star sprite.
+            star.ConfigureTransform();
+            star.UpdateTransform();
+
+            //  Update Transform sets rotation equal to camera rotation, so rotation must be performed here.
+            star.transform.rotation = Quaternion.LookRotation(positionData);
         }
     }
 

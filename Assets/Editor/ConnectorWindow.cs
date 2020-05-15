@@ -13,7 +13,6 @@ public class ConnectorWindow : EditorWindow
     public Transform constellation;
     public Transform starSublevelPrefab;
     public Transform linePrefab;
-    public StarFieldManager goodGod;
     
     public float zRotation;
     bool updating;
@@ -25,7 +24,6 @@ public class ConnectorWindow : EditorWindow
         EditorGUILayout.PropertyField(obj.FindProperty("constellation"));
         EditorGUILayout.PropertyField(obj.FindProperty("starSublevelPrefab"));
         EditorGUILayout.PropertyField(obj.FindProperty("linePrefab"));
-        EditorGUILayout.PropertyField(obj.FindProperty("goodGod"));
 
         EditorGUILayout.Space();
 
@@ -103,13 +101,19 @@ public class ConnectorWindow : EditorWindow
                 Debug.Log("adding sublevel");
                 GameObject lol = PrefabUtility.InstantiatePrefab(starSublevelPrefab.gameObject as GameObject) as GameObject;
                 Transform newSublevel = lol.transform;
-                newSublevel.position = Selection.gameObjects[0].transform.position;
-                newSublevel.position = goodGod.SquishPosition(newSublevel.position, lines.squishFactor);
+
+                // set the parent as the "stages" child of the constellation!
                 newSublevel.SetParent(constellation.GetChild(1));
 
                 StarSublevel stage = newSublevel.GetComponent<StarSublevel>();
-                stage.FindAssociatedStar();
-                stage.NormalizePosition();
+
+                // set star to the one currently selected
+                SerializedObject so = new SerializedObject(stage);
+                so.FindProperty("associatedStar").objectReferenceValue = Selection.gameObjects[0].GetComponent<Star>();
+                so.ApplyModifiedProperties();
+                // normalize stage position
+                Undo.RecordObject(stage.transform, "normalize");
+                stage.transform.position = 200f * stage.AssociatedStar.transform.position.normalized;
 
                 Selection.activeTransform = newSublevel;
             }
@@ -183,6 +187,27 @@ public class ConnectorWindow : EditorWindow
                 line.UpdatePosition();
                 line.EditorUpdateColor();
 
+
+
+
+
+
+
+
+
+
+                // whatever this is here, you need to do the serialized object thing.
+
+
+
+
+
+
+
+
+
+
+
                 //  Project the stars positions onto a sphere of radius 100000f, behind any (reasonable) star.
                 Vector3 startPosition = Selection.gameObjects[0].transform.position;
                 Vector3 endPosition = Selection.gameObjects[1].transform.position;
@@ -204,25 +229,21 @@ public class ConnectorWindow : EditorWindow
             EditorGUILayout.HelpBox("Connections are made only between two selected objects. There are currently " + Selection.gameObjects.Length + " objects selected.", MessageType.Warning);
     }
 
-
-
-
-
     void ConfigureView(SceneView view)
     {
         GUILayout.Label("Edit scene view", EditorStyles.boldLabel);
 
         //  Look at the selected transform and set the pivot to the origin. The user will have to use the scroll wheel to adjust their distance from the pivot.
-        if (GUILayout.Button("Center constellation"))
+        if (GUILayout.Button("Frame constellation"))
         {
             view.pivot = Vector3.zero;
 
-            Quaternion uprightRotation = Quaternion.LookRotation(constellation.position);
-            view.rotation = Quaternion.Euler(uprightRotation.eulerAngles.x, uprightRotation.eulerAngles.y, constellation.GetComponent<ConstellationLines>().zRotation);
+            ConstellationLines.Frame frame = constellation.GetComponent<ConstellationLines>().getFrame;
+            Vector3 rotationEuler = Quaternion.LookRotation(constellation.position).eulerAngles;
+            rotationEuler.z = frame.ZRotation;
 
-            view.cameraSettings.fieldOfView = constellation.GetComponent<ConstellationLines>().GetFOV();
-
-            StarField.StarsFaceOrigin();
+            view.rotation = Quaternion.Euler(rotationEuler);
+            view.cameraSettings.fieldOfView = frame.FieldOfView;
         }
 
         //  Look at the selected transform and set the pivot to the origin. The user will have to use the scroll wheel to adjust their distance from the pivot.
@@ -231,12 +252,6 @@ public class ConnectorWindow : EditorWindow
             constellation.position = 200f * (view.camera.transform.rotation * Vector3.forward);
             constellation.rotation = Quaternion.LookRotation(constellation.position, view.camera.transform.up);
         }
-
-
-
-
-
-
 
         //  Allows you to use the float field as a scroll button to adjust the orientation of the constellation of interest.
         float newZRotation = EditorGUILayout.FloatField("Rotate", zRotation);
@@ -253,6 +268,5 @@ public class ConnectorWindow : EditorWindow
             view.rotation = Quaternion.identity;
             view.cameraSettings.fieldOfView = 60f;
         }
-
     }
 }

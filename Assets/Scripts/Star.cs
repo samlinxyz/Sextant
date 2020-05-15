@@ -9,7 +9,27 @@ public class Star : MonoBehaviour
     public Transform cam;
     public StarFieldManager field;
 
-    public Vector3 truePosition;
+    [SerializeField]
+    private Vector3 truePosition = Vector3.zero;
+    public Vector3 TruePosition
+    {
+        get 
+        {
+            return truePosition; 
+        }
+        set
+        {
+            if (truePosition == Vector3.zero)
+            {
+                transform.position = value;
+                truePosition = value;
+            }
+            else
+            {
+                Debug.LogError("TruePosition must only be set once, immediately after instantiating the star.");
+            }
+        }
+    }
 
     public float absoluteMagnitude;
     public float correctedAbsoluteMagnitude;
@@ -166,7 +186,7 @@ public class Star : MonoBehaviour
         //  This is the formula when distance is measured in lightyears.
         float vmag = absoluteMagnitude - 7.5f + 5 * Mathf.Log10(distance);
 
-        float strangeDistance = field.SquishDistance(distance, squishFactor);
+        float strangeDistance = StarFieldManager.SquishDistance(distance, squishFactor);
         
 
         transform.localPosition = strangeDistance * truePosition.normalized;

@@ -124,8 +124,8 @@ public class GameManager : MonoBehaviour
         Vector3 targetRotation = Quaternion.LookRotation(constellation.position, constellation.up).eulerAngles;
         cameraRotationAnimation = cam.transform.DORotateQuaternion(Quaternion.Euler(targetRotation), zoomDuration);
         //  Zoom in
-        cameraFOVAnimation = DOTween.To(x => cam.fieldOfView = x, cam.fieldOfView, lines.GetFOV(), zoomDuration);
-        DOTween.To(x => starSize = x, starSize, referenceStarSize * lines.GetFOV() / skyViewFOV, zoomDuration);
+        cameraFOVAnimation = DOTween.To(x => cam.fieldOfView = x, cam.fieldOfView, lines.getFrame.FieldOfView, zoomDuration);
+        DOTween.To(x => starSize = x, starSize, referenceStarSize * lines.getFrame.FieldOfView / skyViewFOV, zoomDuration);
 
         selectedLevelName.text = constellation.gameObject.name;
 

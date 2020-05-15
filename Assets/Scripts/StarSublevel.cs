@@ -116,9 +116,4 @@ public class StarSublevel : MonoBehaviour
         return candidateStar.GetComponent<Star>();
     }
 
-    //  Sets the position of this stage as 200 m in the direction of the associated star's position.
-    public void NormalizePosition()
-    {
-        transform.position = 200f * associatedStar.transform.position.normalized;
-    }
 }

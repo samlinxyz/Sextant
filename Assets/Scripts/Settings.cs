@@ -37,7 +37,6 @@ public class Settings : ScriptableObject
     private float maxTemp = 0;
     [SerializeField]
     private float maxRadians = 0;
-
     public float TemperatureToDifficulty(float temperature)
     {
         float normalizedTemperature = temperature / maxTemp;

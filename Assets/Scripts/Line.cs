@@ -31,10 +31,10 @@ public class Line : MonoBehaviour
         line.SetPositions(stars.Select(star => CalculateLocalVertexPosition(star.position)).ToArray());
     }
 
-    private Vector3 CalculateLocalVertexPosition(Vector3 star)
+    private Vector3 CalculateLocalVertexPosition(Vector3 starPosition)
     {
         // Calculate the position of the point lineDistance in the direction from the camera to the star.
-        Vector3 worldPosition = lineDistance * (star - cam.transform.position).normalized + cam.transform.position;
+        Vector3 worldPosition = lineDistance * (starPosition - cam.transform.position).normalized + cam.transform.position;
         return transform.InverseTransformPoint(worldPosition);
     }
 

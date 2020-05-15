@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Xml.Schema;
 using UnityEngine;
 
 public class ConstellationLines : MonoBehaviour
@@ -15,7 +16,12 @@ public class ConstellationLines : MonoBehaviour
     
     public bool transformVertices;
 
-    public float squishFactor;
+    [SerializeField, Range(1f, 50f)]
+    private float squishFactor = 1f;
+    public float SquishFactor
+    {
+        get { return squishFactor; }
+    }
     public float fieldOfView;
     public float zRotation;
 
@@ -123,7 +129,7 @@ public class ConstellationLines : MonoBehaviour
         for (int i = 0; i < vertices.Count; i += 2)
         {
             if (transformVertices)
-                Gizmos.DrawLine(field.SquishPosition(vertices[i], squishFactor), field.SquishPosition(vertices[i + 1], squishFactor));
+                Gizmos.DrawLine(StarFieldManager.SquishPosition(vertices[i], squishFactor), StarFieldManager.SquishPosition(vertices[i + 1], squishFactor));
             else
                 Gizmos.DrawLine(vertices[i], vertices[i + 1]);
         }
@@ -140,10 +146,38 @@ public class ConstellationLines : MonoBehaviour
     //public void SetSquishFactor() { squishFactor = game.squishynessFactor; } 
     public float GetSquishFactor() { return squishFactor; }
 
-    public void SetFOV(float degrees) { fieldOfView = degrees; }
-    public float GetFOV() { return fieldOfView; }
-    public void SetZRotation(float cameraZRotation) { zRotation = cameraZRotation; }
-    public float GetZRotation() { return zRotation; }
+
+    [System.Serializable]
+    public class Frame
+    {
+        [SerializeField]
+        private float fieldOfView = 120f;
+        public float FieldOfView
+        {
+            get { return fieldOfView; }
+        }
+
+        [SerializeField]
+        private float zRotation = 90f;
+        public float ZRotation
+        {
+            get { return zRotation; }
+        }
+
+        public Frame(float fov, float zEuler)
+        {
+            fieldOfView = fov;
+            zRotation = zEuler;
+        }
+    }
+
+    [SerializeField]
+    private Frame frame = null;
+
+    public Frame getFrame
+    {
+        get { return frame; }
+    }
 
     [SerializeField]
     private SphereCollider levelSphere = null;
@@ -152,22 +186,5 @@ public class ConstellationLines : MonoBehaviour
     public void EnableColliderButton(bool enable)
     {
         levelSphere.enabled = enable;
-    }
-
-    public void EditorNormalizeStagePositions()
-    {
-        foreach (StarSublevel stage in GetComponentsInChildren<StarSublevel>())
-            stage.NormalizePosition();
-    }
-
-    [SerializeField, Range(1f, 50f)]
-    private float stageRadius = 1f;
-    public void EditorAdjustColliderSize()
-    {
-        foreach (SphereCollider stageButton in transform.GetComponentsInChildren<SphereCollider>())
-        {
-            if (stageButton != levelSphere)
-                stageButton.radius = stageRadius;
-        }
     }
 }

@@ -23,7 +23,6 @@ public class StarFieldManager : MonoBehaviour
         instance = this;
     }
 
-
     //  Creates the original positions of the stars
     public void ConfigureStarsTransform()
     {
@@ -44,7 +43,7 @@ public class StarFieldManager : MonoBehaviour
             {
                 if (squish)
                 {
-                    star.GetComponent<Star>().ConfigureSquishedTransform(level.GetComponent<ConstellationLines>().squishFactor);
+                    star.GetComponent<Star>().ConfigureSquishedTransform(level.GetComponent<ConstellationLines>().SquishFactor);
                     star.GetComponent<Star>().UpdateTransformExaggerated();
 
                 }
@@ -71,32 +70,23 @@ public class StarFieldManager : MonoBehaviour
         }
     }
 
-    //  A function for the connector window which makes the stars look at the origin 
-    public void StarsFaceOrigin()
-    {
-        foreach (Transform star in transform)
-        {
-            star.rotation = Quaternion.LookRotation(star.position);
-        }
-    }
-
     #region Math functions for squishing
 
-    public float median;
+    public static float median = 200f;
 
-    public float SquishDistance(float trueDistance, float squishFactor)
+    public static float SquishDistance(float trueDistance, float squishFactor)
     {
         trueDistance /= median;
         return median * Mathf.Pow(trueDistance, 1f / squishFactor);
     }
 
-    public Vector3 SquishPosition(Vector3 truePosition, float squishFactor)
+    public static Vector3 SquishPosition(Vector3 truePosition, float squishFactor)
     {
         return SquishDistance(truePosition.magnitude, squishFactor) * truePosition.normalized;
     }
 
     //  The inverse of SquishDistance
-    public float UnsquishDistance(float squishedDistance, float squishFactor)
+    public static float UnsquishDistance(float squishedDistance, float squishFactor)
     {
         squishedDistance /= median;
         return median * Mathf.Pow(squishedDistance, squishFactor);
