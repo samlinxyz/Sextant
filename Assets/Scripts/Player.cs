@@ -10,6 +10,9 @@ public class Player : MonoBehaviour
     public GameManager game;
     public Camera mainCamera;
 
+    [SerializeField]
+    private LineManager lineManager = null;
+
     public Transform constellation;
 
     public Minimap minimap;
@@ -51,6 +54,7 @@ public class Player : MonoBehaviour
         {
             FailLevel();
         }
+        
     }
 
     public static bool allowMovement = false;
@@ -118,8 +122,8 @@ public class Player : MonoBehaviour
 
     public void FailLevel()
     {
-
         allowMovement = false;
+
         joysticks.DOFade(0f, 1f).SetEase(Ease.InQuart).OnComplete(() => joysticks.gameObject.SetActive(false));
 
         game.LevelFailed();
@@ -216,7 +220,8 @@ public class Player : MonoBehaviour
                  glow.localScale = 100f * Vector3.one;
 
                  //  this is why this should be in gamemanager
-                 game.level.GetComponent<ConstellationLines>().SetAlpha(0f);
+                 //game.level.GetComponent<ConstellationLines>().SetAlpha(0f);
+                 lineManager.enabled = true;
              })
             .Append(DOTween.To(x => circularFade.fadeRadius = x, 0f, 1f, 1f)
                 .OnStart(() => circularFade.ResetMaskCenter())
@@ -251,7 +256,6 @@ public class Player : MonoBehaviour
 
     public void ConfigureControls(bool forMobile)
     {
-
         if (forMobile)
         {
             movementControl.GetComponent<RectTransform>().anchoredPosition = -150f * Vector2.right;

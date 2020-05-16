@@ -41,7 +41,8 @@ public class GameManager : MonoBehaviour
     public Minimap minimap;
 
     public StarFieldManager field;
-
+    [SerializeField]
+    private LineManager lineManager = null;
 
     public CircularFade circularFade;
 
@@ -94,6 +95,14 @@ public class GameManager : MonoBehaviour
         DOTween.defaultEaseType = Ease.Linear;
     }
 
+    private void Update()
+    {
+        if (true)
+        {
+
+        }
+    }
+
     void Start()
     {
         levels.LoadProgress();
@@ -133,11 +142,13 @@ public class GameManager : MonoBehaviour
         levelSelectionCanvas.gameObject.SetActive(true);
         levelSelectionCanvas.DOFade(1f, 0.5f);
     }
+
     public void SelectStage(StarSublevel selectedStage, bool alreadyCompleted)
     {
         state = GameState.Level;
-
+        Debug.Log("doing ana nimation");
         Sequence selectStageSequence = DOTween.Sequence();
+        Debug.Log("is tweening " + selectStageSequence.IsPlaying());
 
         if (stage == null)
         {
@@ -209,6 +220,8 @@ public class GameManager : MonoBehaviour
 
     public void ReturnToLevel()
     {
+        lineManager.enabled = false;
+
         Sequence back = DOTween.Sequence()
             .Append(DOTween.To(x => circularFade.fadeRadius = x, 1f, 0f, 1f).OnStart(() =>
             {
@@ -236,22 +249,20 @@ public class GameManager : MonoBehaviour
                 {
                     lev.FadeLines(fadeIn: true);
                 }
-            })
-            .Append(levelSelectionCanvas.DOFade(1f, 0.5f)
-                .OnStart(() =>
-                {
+
+
                     selectedLevelName.text = level.gameObject.name;
 
-                    levelSelectionCanvas.alpha = 0f;
+                    //levelSelectionCanvas.alpha = 0f;
                     levelSelectionCanvas.gameObject.SetActive(true);
-                }))
-            .Join(stageSelectionCanvas.DOFade(1f, 0.5f)
-                .OnStart(() =>
-                {
-                    stageSelectionCanvas.alpha = 0f;
-                    stageSelectionCanvas.gameObject.SetActive(true);
 
-                    //SelectStage(stage, stage.Completed);
+                    stageSelectionCanvas.gameObject.SetActive(true);
+            })
+            .Append(levelSelectionCanvas.DOFade(1f, 0.5f))
+            .Join(stageSelectionCanvas.DOFade(1f, 0.5f)
+                .OnComplete(() =>
+                {
+                    SelectStage(stage, stage.Completed);
                 }));
 
         state = GameState.Level;
@@ -261,6 +272,7 @@ public class GameManager : MonoBehaviour
     {
         state = GameState.Level;
 
+        lineManager.enabled = false;
 
         levelSelectionCanvas.alpha = 0f;
         levelSelectionCanvas.gameObject.SetActive(true);
@@ -268,6 +280,7 @@ public class GameManager : MonoBehaviour
 
         stage.Completed = true;
 
+        stageSelectionCanvas.alpha = 1f;
         stageSelectionCanvas.gameObject.SetActive(true);
         stageCompleteText.text = "Cleared";
         Sequence selectStageSequence = DOTween.Sequence()
@@ -310,7 +323,7 @@ public class GameManager : MonoBehaviour
         ConstellationLines lines = level.GetComponent<ConstellationLines>();
 
         //  The dimmed stars return to regular brightness.
-        field.DimStarsOutside(lines, true);
+        field.DimStarsOutside(lines, false);
 
         //  The stars' normal positions are loaded
         //  This doesn't have to be done when the function is called when a player is just looking at constellations, but it is currently.

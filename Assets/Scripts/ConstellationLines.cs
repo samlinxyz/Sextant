@@ -156,8 +156,8 @@ public class ConstellationLines : MonoBehaviour
         foreach (StarSublevel stage in Stages)
         {
             // Projects starting point of stars onto the player movement sphere.
-            Vector3 projectedLocation = (StarFieldManager.SquishPositionLinear(squishParameters, stage.AssociatedStar.TruePosition) - transform.position).normalized * transform.position.magnitude + transform.position;
-            Gizmos.DrawSphere(projectedLocation, 10f);
+            Vector3 projectedLocalLocation = (StarFieldManager.SquishPositionLinear(squishParameters, stage.AssociatedStar.TruePosition) - transform.localPosition).normalized * transform.localPosition.magnitude;
+            Gizmos.DrawSphere(transform.TransformPoint(projectedLocalLocation), 10f);
         }
     }
     #endregion

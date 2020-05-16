@@ -11,23 +11,63 @@ public class Line : MonoBehaviour
     private Camera cam;
     [SerializeField]
     private LineRenderer line = null;
+    [SerializeField]
+    private Vector3 parentPosition = Vector3.zero;
     void Start()
     {
         cam = Camera.main;
         EditorUpdateColor();
+        line.startWidth = line.endWidth = lineWidth;
     }
     void Update()
     {
         UpdatePosition();
     }
 
+    public void MakeEndsVisibleBasedOnHowFarThePlayerIsFromItInDegrees(Vector3 playerForward)
+    {
+        GradientAlphaKey[] alphaKeys = new GradientAlphaKey[2];
+        for (int i = 0; i < starTransforms.Length; i++)
+        {
+            Vector3 starDirection = starTransforms[i].position - parentPosition;
+            float angleToStar = Vector3.Angle(playerForward, starDirection);
+            angleToStar = angleToStar > 90 ? 180f - angleToStar : angleToStar;
+
+            float angleToHome = Vector3.Angle(playerForward, parentPosition);
+
+            float alpha = playMaxAlpha * Mathf.Max(Mathf.Clamp01(1f - angleToStar / 30f), Mathf.Clamp01(1f - angleToHome / 30f));
+            alphaKeys[i] = new GradientAlphaKey(alpha, i);
+        }
+        Gradient gradient = new Gradient();
+        gradient.SetKeys(line.colorGradient.colorKeys, alphaKeys);
+        line.colorGradient = gradient;
+    }
+
+    public void SetParentPosition()
+    {
+        parentPosition = transform.parent.position;
+    }
+
+    public void SetPlayColor()
+    {
+        GradientColorKey[] colorKeys = new GradientColorKey[]
+        {
+            new GradientColorKey(playColor, 0f),
+            new GradientColorKey(playColor, 1f)
+        };
+        Gradient gradient = new Gradient();
+        gradient.SetKeys(colorKeys, line.colorGradient.alphaKeys);
+        line.colorGradient = gradient;
+    }
+
+    private static Color playColor = Color.white;
+    private static float playMaxAlpha = 0.5f;
+
     private static float lineWidth = 0.2f;
     private static float lineDistance = 100f;
 
     public void UpdatePosition()
     {
-        line.startWidth = line.endWidth = lineWidth;
-
         line.SetPositions(starTransforms.Select(star => CalculateLocalVertexPosition(star.position)).ToArray());
     }
 

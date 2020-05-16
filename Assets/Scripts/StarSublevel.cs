@@ -34,7 +34,11 @@ public class StarSublevel : MonoBehaviour
     }
     void OnMouseUpAsButton()
     {
-        if (game.state == GameState.Level) game.SelectStage(this, Completed);
+        Debug.Log("Iambeinglcicked");
+        if (game.state == GameState.Level)
+        {
+            game.SelectStage(this, Completed);
+        }
     }
 
     void Update()
@@ -44,7 +48,9 @@ public class StarSublevel : MonoBehaviour
             transform.rotation = Quaternion.LookRotation(transform.position, cam.transform.up);
             transform.Rotate(0f, 0f, levels.DiffractionAngle);
         }
-    }
+
+
+}
 
     public SpriteRenderer diffraction;
     public SpriteRenderer refraction;
