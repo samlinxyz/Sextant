@@ -19,6 +19,27 @@ public class ConstellationLinesEditor : Editor
             SetFrameFor(lines);
         }
 
+        SerializedObject so = new SerializedObject(lines);
+        SerializedProperty sp = so.FindProperty("squishParameters");
+        
+        if (GUILayout.Button("click me to display what properties there are within the custom class frame!"))
+        {
+            if (sp.isArray)
+            {
+                Debug.Log("squishparams is an array");
+            }
+            if (sp.isExpanded)
+            {
+                Debug.Log("squishparams is expanded");
+            }
+            Debug.Log($"this property's full path is: {sp.propertyPath}");
+            Debug.Log("These are the names of the property's children:");
+            foreach (SerializedProperty spchild in sp)
+            {
+                Debug.Log(spchild.displayName + $" - full property path: {spchild.propertyPath}");
+            }
+        }
+
         /*
         // Soon to be deprecated 
         float newSquishFactor = EditorGUILayout.Slider(lines.SquishFactor, 1f, 50f);
@@ -89,10 +110,12 @@ public class ConstellationLinesEditor : Editor
         SceneView view = SceneView.lastActiveSceneView;
         if (view != null)
         {
-            float fov = view.cameraSettings.fieldOfView;
+            float fieldOfView = view.camera.fieldOfView;
             float zRotation = view.camera.transform.rotation.eulerAngles.z;
+
             SerializedObject so = new SerializedObject(lines);
-            so.FindProperty("frame").SetValue(new ConstellationLines.Frame(fov, zRotation));
+            so.FindProperty("frame").FindPropertyRelative("fieldOfView").floatValue = fieldOfView;
+            so.FindProperty("frame").FindPropertyRelative("zRotation").floatValue = zRotation;
             so.ApplyModifiedProperties();
         }
         else

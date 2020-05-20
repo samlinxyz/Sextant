@@ -23,7 +23,7 @@ public class Line : MonoBehaviour
     {
         UpdatePosition();
     }
-
+    /*
     public void MakeEndsVisibleBasedOnHowFarThePlayerIsFromItInDegrees(Vector3 playerForward)
     {
         GradientAlphaKey[] alphaKeys = new GradientAlphaKey[2];
@@ -36,6 +36,27 @@ public class Line : MonoBehaviour
             float angleToHome = Vector3.Angle(playerForward, parentPosition);
 
             float alpha = playMaxAlpha * Mathf.Max(Mathf.Clamp01(1f - angleToStar / 30f), Mathf.Clamp01(1f - angleToHome / 30f));
+            alphaKeys[i] = new GradientAlphaKey(alpha, i);
+        }
+        Gradient gradient = new Gradient();
+        gradient.SetKeys(line.colorGradient.colorKeys, alphaKeys);
+        line.colorGradient = gradient;
+    }
+    */
+    public void MakeEndsVisibleBasedOnHowFarThePlayerIsFromItInDegrees(Vector3 playerForward)
+    {
+        GradientAlphaKey[] alphaKeys = new GradientAlphaKey[2];
+        for (int i = 0; i < starTransforms.Length; i++)
+        {
+            //  Treats y 
+            Vector2 starViewportPosition = cam.WorldToViewportPoint(starTransforms[i].position);
+            starViewportPosition = 2f * starViewportPosition - Vector2.one;
+            starViewportPosition.x *= cam.aspect;
+            float visibleRangeInViewportVerticals = 0.3f;
+
+            float angleToHome = Vector3.Angle(playerForward, parentPosition);
+
+            float alpha = playMaxAlpha * Mathf.Max(Mathf.Clamp01(1f - starViewportPosition.magnitude / visibleRangeInViewportVerticals), Mathf.Clamp01(1f - angleToHome / 30f));
             alphaKeys[i] = new GradientAlphaKey(alpha, i);
         }
         Gradient gradient = new Gradient();

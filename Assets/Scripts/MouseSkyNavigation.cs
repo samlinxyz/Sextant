@@ -25,6 +25,10 @@ public class MouseSkyNavigation : MonoBehaviour
     Vector3 initialMousePosition;
     Vector2 deltaMousePosition;
     public float sensitivity;
+    [SerializeField]
+    private float dragSpeed = 10f;
+    [SerializeField]
+    private float fOVRelaxSpeed = 2f;
     public bool dragged = false;
     [SerializeField]
     private float squareDragThreshold;
@@ -90,8 +94,8 @@ public class MouseSkyNavigation : MonoBehaviour
 
         if (clickedSinceEnabled)
         {
-            mainCamera.transform.rotation = Quaternion.Lerp(mainCamera.transform.rotation, Quaternion.Euler(targetRotation), 10f * Time.deltaTime);
-            mainCamera.fieldOfView = Mathf.Lerp(mainCamera.fieldOfView, game.SkyViewFOV, 10f * Time.deltaTime);
+            mainCamera.transform.rotation = Quaternion.Lerp(mainCamera.transform.rotation, Quaternion.Euler(targetRotation), dragSpeed * Time.deltaTime);
+            mainCamera.fieldOfView = Mathf.Lerp(mainCamera.fieldOfView, game.SkyViewFOV, fOVRelaxSpeed * Time.deltaTime);
         }
     }
 

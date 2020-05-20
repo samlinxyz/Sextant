@@ -113,13 +113,13 @@ public class Star : MonoBehaviour
 
     public float VmagAt(float distance)
     {
-        return correctedAbsoluteMagnitude - 7.5f + 5 * Mathf.Log10(distance);
+        return correctedAbsoluteMagnitude - 7.5f + 5f * Mathf.Log10(distance);
     }
 
     public void UpdateTransform()
     {
         float distance = Vector3.Distance(cam.position, transform.position);    //  Distance is not optimal. Use sqrMagnitude.
-        float visibility = 1f - VmagAt(distance) / 6.5f;
+        float visibility = 1f - VmagAt(distance) / game.MaxVisibleMagnitude;
         visibility = Mathf.Clamp(visibility, 0f, 5f); // 5 is way more than the max
 
         //  Transformations
@@ -151,7 +151,7 @@ public class Star : MonoBehaviour
     {
         float distance = Vector3.Distance(cam.position, transform.position);    //  Distance is not optimal. Use sqrMagnitude.
         //float vmag = correctedAbsoluteMagnitude - 7.5f + 5 * Mathf.Log10(field.UnsquishDistance(distance, 4f));
-        float visibility = 1f - VmagAt(distance) / 6.5f;
+        float visibility = 1f - VmagAt(distance) / game.MaxVisibleMagnitude;
         visibility = Mathf.Clamp(visibility, 0f, 5f); // 5 is way more than the max
 
         //  Transformations
@@ -186,7 +186,7 @@ public class Star : MonoBehaviour
 
         float vmag = absoluteMagnitude - 7.5f + 5 * Mathf.Log10(distance);
 
-        transform.localPosition = StarFieldManager.SquishPositionLinear(parameters, truePosition);
+        transform.localPosition = StarFieldManager.SquishPosition(parameters, truePosition);
 
         correctedAbsoluteMagnitude = vmag + 7.5f - 5 * Mathf.Log10(transform.localPosition.magnitude);
 

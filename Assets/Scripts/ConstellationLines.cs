@@ -7,6 +7,9 @@ public class ConstellationLines : MonoBehaviour
 {
     public List<Vector3> vertices;
 
+    [field: SerializeField]
+    public float helloWorld { get; set; }
+
     public GameManager game;
     public StarFieldManager field;
     [Range(0f, 1f)]
@@ -136,8 +139,12 @@ public class ConstellationLines : MonoBehaviour
         Gizmos.color = Color.green * gizmosAlpha;
         DrawStartingPoints();
 
+        // Draw player movement range
         Gizmos.color = Color.gray * gizmosAlpha;
         Gizmos.DrawWireSphere(transform.position, transform.position.magnitude);
+
+        Gizmos.color = Color.blue * gizmosAlpha;
+        Gizmos.DrawWireSphere(transform.position, transform.position.magnitude * Mathf.Sin(Mathf.Deg2Rad * frame.FieldOfView / 2f));
     }
 
     private void DrawLines()
@@ -145,7 +152,7 @@ public class ConstellationLines : MonoBehaviour
         for (int i = 0; i < vertices.Count; i += 2)
         {
             if (transformVertices)
-                Gizmos.DrawLine(StarFieldManager.SquishPositionLinear(squishParameters, vertices[i]), StarFieldManager.SquishPositionLinear(squishParameters, vertices[i+1]));
+                Gizmos.DrawLine(StarFieldManager.SquishPosition(squishParameters, vertices[i]), StarFieldManager.SquishPosition(squishParameters, vertices[i+1]));
             else
                 Gizmos.DrawLine(vertices[i], vertices[i + 1]);
         }
@@ -156,8 +163,8 @@ public class ConstellationLines : MonoBehaviour
         foreach (StarSublevel stage in Stages)
         {
             // Projects starting point of stars onto the player movement sphere.
-            Vector3 projectedLocalLocation = (StarFieldManager.SquishPositionLinear(squishParameters, stage.AssociatedStar.TruePosition) - transform.localPosition).normalized * transform.localPosition.magnitude;
-            Gizmos.DrawSphere(transform.TransformPoint(projectedLocalLocation), 10f);
+            Vector3 projectedLocalLocation = (StarFieldManager.SquishPosition(squishParameters, stage.AssociatedStar.TruePosition) - transform.localPosition).normalized * transform.localPosition.magnitude;
+            Gizmos.DrawSphere(transform.root.TransformPoint(projectedLocalLocation) + transform.position, 10f);
         }
     }
     #endregion
@@ -190,6 +197,13 @@ public class ConstellationLines : MonoBehaviour
         {
             get { return zRotation; }
             private set { zRotation = value; }
+        }
+        [SerializeField]
+        private bool isotropicShape = true;
+        public bool IsotropicShape
+        {
+            get { return isotropicShape; }
+            private set { isotropicShape = value; }
         }
 
         public Frame(float fieldOfView, float zRotation)

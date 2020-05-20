@@ -1,8 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using System.IO;
-using System.Runtime.CompilerServices;
+﻿using UnityEngine;
 
 [ExecuteInEditMode]
 public class StarFieldManager : MonoBehaviour
@@ -72,32 +68,23 @@ public class StarFieldManager : MonoBehaviour
         }
     }
 
-    #region Math functions for squishing
-
-    public static float median = 200f;
-
-    public static float SquishDistance(float trueDistance, float squishFactor)
-    {
-        trueDistance /= median;
-        return median * Mathf.Pow(trueDistance, 1f / squishFactor);
-    }
-
-    public static Vector3 SquishPosition(Vector3 truePosition, float squishFactor)
-    {
-        return SquishDistance(truePosition.magnitude, squishFactor) * truePosition.normalized;
-    }
-
-    //  The inverse of SquishDistance
-    public static float UnsquishDistance(float squishedDistance, float squishFactor)
-    {
-        squishedDistance /= median;
-        return median * Mathf.Pow(squishedDistance, squishFactor);
-    }
-    #endregion
-
     [System.Serializable]
     public class SquishParameters
     {
+        [System.Serializable]
+        public enum SquishMode
+        {
+            Linear,
+            Power,
+        }
+
+        [SerializeField]
+        private SquishMode mode = SquishMode.Linear;
+        public SquishMode Mode
+        {
+            get { return mode; }
+        }
+
         [SerializeField]
         private float radialCompression = 1f;
         public float RadialCompression
@@ -114,6 +101,38 @@ public class StarFieldManager : MonoBehaviour
             private set { minRadius = value; }
         }
 
+        /*
+        [SerializeField]
+        private float farRadialCompression = 1f;
+        public float FarRadialCompression
+        {
+            get { return farRadialCompression; }
+            private set { farRadialCompression = value; }
+        }
+        [SerializeField]
+        private float farRadius = 0f;
+        public float FarRadius
+        {
+            get { return farRadius; }
+            private set { farRadius = value; }
+        }
+        */
+
+        [SerializeField]
+        private float power = 1f;
+        public float Power
+        {
+            get { return power; }
+        }
+
+        [SerializeField]
+        private float median = 200f;
+        public float Median
+        {
+            get { return median; }
+        }
+
+
         public SquishParameters(float radialCompression, float minRadius)
         {
             RadialCompression = radialCompression;
@@ -123,7 +142,7 @@ public class StarFieldManager : MonoBehaviour
         public SquishParameters() { }
     }
 
-    public static Vector3 SquishPositionLinear(SquishParameters parameters, Vector3 initialPosition)
+    public static Vector3 SquishPosition(SquishParameters parameters, Vector3 initialPosition)
     {
         if (parameters == null)
         {
@@ -131,6 +150,15 @@ public class StarFieldManager : MonoBehaviour
             parameters = new SquishParameters();
         }
 
-        return initialPosition / parameters.RadialCompression + parameters.MinRadius * initialPosition.normalized;
+        switch (parameters.Mode)
+        {
+            case SquishParameters.SquishMode.Linear:
+                return initialPosition / parameters.RadialCompression + parameters.MinRadius * initialPosition.normalized;
+            case SquishParameters.SquishMode.Power:
+                return Mathf.Pow(initialPosition.magnitude / parameters.Median, 1f / parameters.Power) * parameters.Median * initialPosition.normalized;
+            default:
+                Debug.LogError("Calculations in SquishPosition do not include the current squishmode. The identity transformation has been applied.");
+                return initialPosition;
+        }
     }
 }

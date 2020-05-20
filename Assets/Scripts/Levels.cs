@@ -51,7 +51,7 @@ public class Levels : MonoBehaviour
 
     public void SetProgress(bool[][] progress)
     {
-        string everything = "";
+        string everything = string.Empty;
         for (int i = 0; i < progress.Length; i++)
         {
             for (int j = 0; j < progress[i].Length; j++)

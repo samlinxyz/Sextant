@@ -13,8 +13,6 @@ public class StarFieldEditor : Editor
 
         base.OnInspectorGUI();
 
-        if (GUILayout.Button("Configure Stars Transform")) field.ConfigureStarsTransform();
-
         GUILayout.BeginHorizontal();
         if (GUILayout.Button("Load stars"))
         {

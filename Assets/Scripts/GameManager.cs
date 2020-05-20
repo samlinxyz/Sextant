@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using System.IO;
 using TMPro;
 using DG.Tweening;
+using UnityEngine.Windows.WebCam;
 
 public enum GameState
 {
@@ -34,6 +35,12 @@ public class GameManager : MonoBehaviour
     public GameObject star;
     public float referenceStarSize; //  The size that a magnitude 0 star appears in the sky view in radians
     public float starSize;  //  The size of a magnitude 0 star modified to let star size appear constant of camera zoom. Stars reference this variable to calculate local scale.
+    [SerializeField]
+    private float maxVisibleMagnitude = 6.5f;
+    public float MaxVisibleMagnitude
+    {
+        get { return maxVisibleMagnitude; }
+    }
     public Camera cam;
 
     public Transform player;
@@ -58,12 +65,10 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private float zoomDuration = 1f;
 
-    private Tween cameraRotationAnimation = null;
-    private Tween cameraFOVAnimation = null;
+    private Tween cameraRotationAndFOV = null;
     public void EndCameraAnimations()
     {
-        cameraRotationAnimation.Kill();
-        cameraFOVAnimation.Kill();
+        cameraRotationAndFOV.Kill();
     }
 
     [SerializeField]
@@ -93,6 +98,8 @@ public class GameManager : MonoBehaviour
         field.ConfigureStarsTransform();
 
         DOTween.defaultEaseType = Ease.Linear;
+
+        
     }
 
     private void Update()
@@ -130,12 +137,10 @@ public class GameManager : MonoBehaviour
 
         //  Animate the camera view the constellation
         EndCameraAnimations();
-        Vector3 targetRotation = Quaternion.LookRotation(constellation.position, constellation.up).eulerAngles;
-        cameraRotationAnimation = cam.transform.DORotateQuaternion(Quaternion.Euler(targetRotation), zoomDuration);
-        //  Zoom in
-        cameraFOVAnimation = DOTween.To(x => cam.fieldOfView = x, cam.fieldOfView, lines.getFrame.FieldOfView, zoomDuration);
-        DOTween.To(x => starSize = x, starSize, referenceStarSize * lines.getFrame.FieldOfView / skyViewFOV, zoomDuration);
-
+        CalculateTargetEulersAndFOV(constellation.localPosition, lines.getFrame, out Vector3 targetEuler, out float fieldOfView);
+        cameraRotationAndFOV = DOCameraRotationAndFOV(targetEuler, fieldOfView, zoomingIn: true);
+        DOTween.To(x => starSize = x, starSize, referenceStarSize * fieldOfView / skyViewFOV, zoomDuration);
+        
         selectedLevelName.text = constellation.gameObject.name;
 
         levelSelectionCanvas.alpha = 0f;
@@ -143,12 +148,96 @@ public class GameManager : MonoBehaviour
         levelSelectionCanvas.DOFade(1f, 0.5f);
     }
 
+    private Tween DOCameraRotationAndFOV(Vector3 targetEuler, float fieldOfView, bool zoomingIn)
+    {
+        Sequence animation = DOTween.Sequence();
+        /*
+        if (zoomingIn)
+        {
+            animation
+                .Append(cam.DOFieldOfView(fieldOfView, zoomDuration).SetEase(Ease.OutQuad))
+                .Join(RotateCameraXY(targetEuler, zoomDuration))
+                .Join(RotateCameraZ(targetEuler.z, zoomDuration));
+        }
+        else
+        {
+            animation
+                .Append(cam.DOFieldOfView(fieldOfView, zoomDuration).SetEase(Ease.OutQuad))
+                .Join(RotateCameraXY(targetEuler, zoomDuration))
+                .Join(RotateCameraZ(targetEuler.z, zoomDuration));
+        }
+        */
+        Vector3 initialEuler = cam.transform.rotation.eulerAngles;
+        RegularizeTargetEuler(ref targetEuler, initialEuler);
+
+        float pushback = 0.4f * Mathf.Clamp01(Vector3.Angle(Quaternion.Euler(targetEuler) * Vector3.forward, Quaternion.Euler(initialEuler) * Vector3.forward) / 90f);
+
+        animation
+            .Append(cam.DOFieldOfView(fieldOfView, zoomDuration).SetEase(Ease.OutCubic))
+            .Join(RotateCameraXY(initialEuler, targetEuler, 0.7f * zoomDuration).SetEase(Ease.OutCubic))
+            .Insert(pushback * zoomDuration, RotateCameraZ(initialEuler.z, targetEuler.z, (1f-pushback) * zoomDuration).SetEase(Ease.InOutQuad));
+
+        return animation;
+    }
+
+    private void RegularizeTargetEuler(ref Vector3 targetEuler, Vector3 initialEuler)
+    {
+        targetEuler.y -= (targetEuler.y - initialEuler.y > 180f) ? 360f : 0f;
+        targetEuler.y += (targetEuler.y - initialEuler.y < -180f) ? 360f : 0f;
+        targetEuler.z -= (targetEuler.z - initialEuler.z > 180f) ? 360f : 0f;
+        targetEuler.z += (targetEuler.z - initialEuler.z < -180f) ? 360f : 0f;
+    }
+
+    private void CalculateTargetEulersAndFOV(Vector3 constellationLocalPosition, ConstellationLines.Frame targetFrame, out Vector3 targetEuler, out float fieldOfView)
+    {
+        Quaternion targetRotation = Quaternion.LookRotation(constellationLocalPosition);
+        targetRotation = sky.localRotation * targetRotation * Quaternion.Euler(0f, 0f, targetFrame.ZRotation);
+        targetEuler = targetRotation.eulerAngles;
+        if (targetFrame.IsotropicShape)
+        {
+            targetEuler.z = 0f;
+        }
+        else
+        {
+            targetEuler.z -= targetEuler.z > 180f ? 360f : 0f;
+            targetEuler.z *= 0.7f;
+        }
+
+        fieldOfView = targetFrame.FieldOfView;
+    }
+
+    private void CalculateTargetEulersAndFOV(Vector3 constellationLocalPosition, out Vector3 targetEuler, out float fieldOfView)
+    {
+        targetEuler = Quaternion.LookRotation(sky.localRotation * constellationLocalPosition).eulerAngles;
+        fieldOfView = skyViewFOV; // this is bad. you should not use an overload to have a different function.
+    }
+
+    private Tween RotateCameraXY(Vector2 initial, Vector2 target, float duration)
+    {
+        return DOTween.To(t =>
+        {
+            Vector2 currentXY = Vector2.Lerp(initial, target, t);
+            Vector3 z = cam.transform.rotation.eulerAngles.z * Vector3.forward;
+            cam.transform.rotation = Quaternion.Euler((Vector3)currentXY + z);
+        },
+        0f, 1f, duration);
+    }
+    private Tween RotateCameraZ(float initial, float target, float duration)
+    {
+        return DOTween.To(t =>
+        {
+            float currentZ = Mathf.Lerp(initial, target, t);
+            Vector3 currentEuler = cam.transform.rotation.eulerAngles;
+            currentEuler.z = currentZ;
+            cam.transform.rotation = Quaternion.Euler(currentEuler);
+        }, 
+        0f, 1f, duration);
+    }
+
     public void SelectStage(StarSublevel selectedStage, bool alreadyCompleted)
     {
         state = GameState.Level;
-        Debug.Log("doing ana nimation");
         Sequence selectStageSequence = DOTween.Sequence();
-        Debug.Log("is tweening " + selectStageSequence.IsPlaying());
 
         if (stage == null)
         {
@@ -169,7 +258,7 @@ public class GameManager : MonoBehaviour
         selectStageSequence.AppendCallback(() =>
         {
             stageNameText.text = selectedStage.name;
-            stageCompleteText.text = alreadyCompleted ? "Cleared" : "";
+            stageCompleteText.text = alreadyCompleted ? "Cleared" : string.Empty;
         });
         selectStageSequence
             .Append(stageNameText.DOFade(1f, 0.5f))
@@ -310,14 +399,11 @@ public class GameManager : MonoBehaviour
     {
         level.GetComponent<SphereCollider>().enabled = true;
 
-        //  Camera rotates...
+        //  Camera rotates and zooms out again to level selection
         EndCameraAnimations();
-        Vector3 targetRotation = cam.transform.rotation.eulerAngles;
-        targetRotation.x = Mathf.Min(targetRotation.x - 360f, -mouseSky.MininumDeclination);
-        targetRotation.z = 0f;
-        cameraRotationAnimation = cam.transform.DORotateQuaternion(Quaternion.Euler(targetRotation), zoomDuration);
-        //  ... and zooms out again to level selection
-        cameraFOVAnimation = DOTween.To(x => cam.fieldOfView = x, cam.fieldOfView, skyViewFOV, zoomDuration);
+        CalculateTargetEulersAndFOV(level.localPosition, out Vector3 targetEuler, out float fieldOfView);
+        cameraRotationAndFOV = DOCameraRotationAndFOV(targetEuler, fieldOfView, zoomingIn: false);
+
         DOTween.To(x => starSize = x, starSize, referenceStarSize, zoomDuration);
 
         ConstellationLines lines = level.GetComponent<ConstellationLines>();
@@ -372,7 +458,6 @@ public class GameManager : MonoBehaviour
         sky.rotation = Quaternion.AngleAxis(90f - latitude, Vector3.right);
         sky.Rotate(0f, -110f, 0f);
     }
-
 
     public void RotateSky(bool forward)
     {

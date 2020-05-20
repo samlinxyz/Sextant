@@ -16,6 +16,7 @@ public class ConnectorWindow : EditorWindow
     
     public float zRotation;
     bool updating;
+    string hahaha;
 
     void OnGUI()
     {
@@ -48,6 +49,14 @@ public class ConnectorWindow : EditorWindow
             EditorGUILayout.Space();
 
             var view = SceneView.lastActiveSceneView;
+            if (GUILayout.Button("This should do nothing, but it does something.")) // debugging
+            {
+                float f = view.camera.fieldOfView;
+                view.cameraSettings.fieldOfView = view.camera.fieldOfView;
+                hahaha = $"({f},{view.cameraSettings.fieldOfView})";
+            }
+
+            EditorGUILayout.TextField(hahaha);
             if (view != null)
             {
                 EditorGUILayout.BeginVertical("Box");
@@ -191,7 +200,7 @@ public class ConnectorWindow : EditorWindow
 
 
 
-
+                
 
 
 
