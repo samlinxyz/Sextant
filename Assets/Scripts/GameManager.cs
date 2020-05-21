@@ -75,6 +75,9 @@ public class GameManager : MonoBehaviour
     private float cameraAnimationDuration;
     #endregion
 
+    [SerializeField]
+    private Transform skyTransform = null;
+
     public static GameManager instance = null;  //  Amazing! This allows you to find and reference the Game Manager script from everywhere by typing GameManager.instance!!! 
     void Awake()
     {
@@ -88,8 +91,6 @@ public class GameManager : MonoBehaviour
         state = GameState.Sky;
 
         mouseSky.enabled = true;
-
-        InitializeSky();
 
         RenderSettings.skybox.SetFloat("_AtmosphereThickness", 1f);
 
@@ -139,7 +140,7 @@ public class GameManager : MonoBehaviour
         EndCameraAnimations();
         CalculateTargetEulersAndFOV(constellation.localPosition, lines.getFrame, out Vector3 targetEuler, out float fieldOfView);
         cameraRotationAndFOV = DOCameraRotationAndFOV(targetEuler, fieldOfView, zoomingIn: true);
-        DOTween.To(x => starSize = x, starSize, referenceStarSize * fieldOfView / skyViewFOV, zoomDuration);
+        DOTween.To(x => starSize = x, starSize, (2f - fieldOfView / skyViewFOV) * referenceStarSize * fieldOfView / skyViewFOV, zoomDuration);
         
         selectedLevelName.text = constellation.gameObject.name;
 
@@ -173,9 +174,9 @@ public class GameManager : MonoBehaviour
         float pushback = 0.4f * Mathf.Clamp01(Vector3.Angle(Quaternion.Euler(targetEuler) * Vector3.forward, Quaternion.Euler(initialEuler) * Vector3.forward) / 90f);
 
         animation
-            .Append(cam.DOFieldOfView(fieldOfView, zoomDuration).SetEase(Ease.OutCubic))
-            .Join(RotateCameraXY(initialEuler, targetEuler, 0.7f * zoomDuration).SetEase(Ease.OutCubic))
-            .Insert(pushback * zoomDuration, RotateCameraZ(initialEuler.z, targetEuler.z, (1f-pushback) * zoomDuration).SetEase(Ease.InOutQuad));
+            .Append(RotateCameraXY(initialEuler, targetEuler, 0.7f * zoomDuration).SetEase(Ease.OutCubic))
+            .Insert(pushback * zoomDuration, cam.DOFieldOfView(fieldOfView, (1f - pushback) * zoomDuration).SetEase(Ease.InOutCubic))
+            .Insert(pushback * zoomDuration, RotateCameraZ(initialEuler.z, targetEuler.z, (1f-pushback) * zoomDuration).SetEase(Ease.InOutCubic));
 
         return animation;
     }
@@ -191,16 +192,25 @@ public class GameManager : MonoBehaviour
     private void CalculateTargetEulersAndFOV(Vector3 constellationLocalPosition, ConstellationLines.Frame targetFrame, out Vector3 targetEuler, out float fieldOfView)
     {
         Quaternion targetRotation = Quaternion.LookRotation(constellationLocalPosition);
-        targetRotation = sky.localRotation * targetRotation * Quaternion.Euler(0f, 0f, targetFrame.ZRotation);
+        targetRotation = skyTransform.localRotation * targetRotation * Quaternion.Euler(0f, 0f, targetFrame.ZRotation);
         targetEuler = targetRotation.eulerAngles;
         if (targetFrame.IsotropicShape)
         {
+            // If the constellation makes sense from any angle, don't rotate the camera.
             targetEuler.z = 0f;
         }
         else
         {
             targetEuler.z -= targetEuler.z > 180f ? 360f : 0f;
-            targetEuler.z *= 0.7f;
+            if (Mathf.Abs(targetEuler.z) > 60f)
+            {
+                // If the constellation is more than 60 degrees from the angle with which it makes the most sense, rotate 75% of the way there.
+                targetEuler.z *= 0.75f;
+            }
+            else
+            {
+                targetEuler.z = 0f;
+            }
         }
 
         fieldOfView = targetFrame.FieldOfView;
@@ -208,8 +218,8 @@ public class GameManager : MonoBehaviour
 
     private void CalculateTargetEulersAndFOV(Vector3 constellationLocalPosition, out Vector3 targetEuler, out float fieldOfView)
     {
-        targetEuler = Quaternion.LookRotation(sky.localRotation * constellationLocalPosition).eulerAngles;
-        fieldOfView = skyViewFOV; // this is bad. you should not use an overload to have a different function.
+        targetEuler = Quaternion.LookRotation(skyTransform.localRotation * constellationLocalPosition).eulerAngles;
+        fieldOfView = skyViewFOV; // This is bad code. you should not use an overload to have a different function.
     }
 
     private Tween RotateCameraXY(Vector2 initial, Vector2 target, float duration)
@@ -445,27 +455,4 @@ public class GameManager : MonoBehaviour
     }
     #endregion
 
-    #region Sky orientation
-
-    public Transform sky;
-    public float latitude;
-    public int hoursToRotate;
-
-
-    public void InitializeSky()
-    {
-        //  The north pole is rotated along the y-z plane
-        sky.rotation = Quaternion.AngleAxis(90f - latitude, Vector3.right);
-        sky.Rotate(0f, -110f, 0f);
-    }
-
-    public void RotateSky(bool forward)
-    {
-        float rotationDegrees = (float)hoursToRotate * 360 / 24;
-        rotationDegrees *= forward ? 1 : -1;
-        Quaternion targetRotation = Quaternion.AngleAxis(rotationDegrees, sky.up) * sky.rotation;
-        sky.DORotateQuaternion(targetRotation, 5f).SetEase(Ease.InOutSine);
-    }
-
-    #endregion
 }

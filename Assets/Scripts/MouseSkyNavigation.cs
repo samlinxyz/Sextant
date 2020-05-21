@@ -7,11 +7,8 @@ public class MouseSkyNavigation : MonoBehaviour
     GameManager game;
     Camera mainCamera;
 
-    Vector2 initialMouseDirection;
-    Quaternion initialCameraRotation;
+    Vector3 initialCameraEulers;
 
-    private float xRotation;
-    private float yRotation;
     [SerializeField]
     private Vector2 targetRotation = Vector2.zero;
 
@@ -23,7 +20,6 @@ public class MouseSkyNavigation : MonoBehaviour
     private float maximumDeclination = 85f;
 
     Vector3 initialMousePosition;
-    Vector2 deltaMousePosition;
     public float sensitivity;
     [SerializeField]
     private float dragSpeed = 10f;
@@ -31,9 +27,21 @@ public class MouseSkyNavigation : MonoBehaviour
     private float fOVRelaxSpeed = 2f;
     public bool dragged = false;
     [SerializeField]
-    private float squareDragThreshold;
+    private float dragThreshold;
 
     private bool clickedSinceEnabled = false;
+
+    [SerializeField]
+    private float degreesToRotate = 0f;
+    [SerializeField]
+    private Transform skyTransform = null;
+    private Quaternion initialSkyRotation;
+
+    [SerializeField]
+    private Quaternion targetSkyRotation;
+
+    [SerializeField]
+    private float skyRotationDirection = 0f;
 
     // Start is called before the first frame update
     void Start()
@@ -42,10 +50,7 @@ public class MouseSkyNavigation : MonoBehaviour
         mainCamera = Camera.main;
 
         initialMousePosition = Input.mousePosition;
-        squareDragThreshold = UnityEngine.EventSystems.EventSystem.current.pixelDragThreshold;
-        squareDragThreshold *= squareDragThreshold;
-
-        xRotation = -mininumDeclination;
+        dragThreshold = UnityEngine.EventSystems.EventSystem.current.pixelDragThreshold;
     }
 
     // Update is called once per frame
@@ -65,27 +70,37 @@ public class MouseSkyNavigation : MonoBehaviour
                 clickedSinceEnabled = true;
             }
 
-            initialCameraRotation = mainCamera.transform.rotation;
+            initialCameraEulers = mainCamera.transform.rotation.eulerAngles;
+            initialCameraEulers.x -= initialCameraEulers.x > 180f ? 360f : 0f;
             initialMousePosition = Input.mousePosition;
+            skyRotationDirection = Mathf.Sign(mainCamera.ScreenToWorldPoint(initialMousePosition + Vector3.forward).x);
+
+            initialSkyRotation = skyTransform.rotation;
+            degreesToRotate = 0f;
         }
         if (Input.GetMouseButton(0))
         {
-            Vector3 deltaPosition = Input.mousePosition - initialMousePosition;
-            if (deltaPosition.sqrMagnitude > squareDragThreshold)
+            Vector2 deltaPosition = Input.mousePosition - initialMousePosition;
+            if (deltaPosition.sqrMagnitude > dragThreshold * dragThreshold)
             {
                 dragged = true;
             }
-            deltaPosition *= sensitivity;
-            //  Euler angles are inconveniently disconinuous. As positive values decrease beyond 0, they jump to 360 to continue decreasing. Here, I'm changing the range from [0, 360] to [-180, 180], which makes the subsequent calculations possible.
-            float deltaPitch = -deltaPosition.y;
-            float initialPitch = initialCameraRotation.eulerAngles.x;
-            initialPitch -= initialPitch > 180f ? 360f : 0f;
+            Vector2 deltaRotation = deltaPosition * sensitivity;
 
-            //  The camera should not look further up than the 5 degrees from the zenith and further down than 5 degrees from the nadir.
-            targetRotation.x = Mathf.Clamp(initialPitch - deltaPitch, -maximumDeclination, -mininumDeclination);
+            float finalPitchVirtual = initialCameraEulers.x + deltaRotation.y;
 
-            targetRotation.y = initialCameraRotation.eulerAngles.y - deltaPosition.x;
+            //  The camera's declination is constrained.
+            targetRotation.x = Mathf.Clamp(finalPitchVirtual, -maximumDeclination, -mininumDeclination);
 
+            //  If the user intends to drag the camera below the minimum declination, the sky will rotate to reveal more sky in that direction.
+            float pitchOverflow = finalPitchVirtual - targetRotation.x;
+            degreesToRotate += skyRotationDirection * pitchOverflow;
+            targetSkyRotation = initialSkyRotation * Quaternion.Euler(0f, degreesToRotate, 0f);
+
+            //  If the user drags downward after rotating the sky, this will allow the user to immediately pan.
+            initialCameraEulers.x -= pitchOverflow;
+
+            targetRotation.y = initialCameraEulers.y - deltaRotation.x;
         }
         if (Input.GetMouseButtonUp(0))
         {
@@ -94,8 +109,10 @@ public class MouseSkyNavigation : MonoBehaviour
 
         if (clickedSinceEnabled)
         {
-            mainCamera.transform.rotation = Quaternion.Lerp(mainCamera.transform.rotation, Quaternion.Euler(targetRotation), dragSpeed * Time.deltaTime);
+            mainCamera.transform.rotation = Quaternion.Slerp(mainCamera.transform.rotation, Quaternion.Euler(targetRotation), dragSpeed * Time.deltaTime);
             mainCamera.fieldOfView = Mathf.Lerp(mainCamera.fieldOfView, game.SkyViewFOV, fOVRelaxSpeed * Time.deltaTime);
+
+            skyTransform.rotation = Quaternion.Slerp(skyTransform.rotation, targetSkyRotation, dragSpeed * Time.deltaTime);
         }
     }
 
