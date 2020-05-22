@@ -191,9 +191,49 @@ public class GameManager : MonoBehaviour
 
     private void CalculateTargetEulersAndFOV(Vector3 constellationLocalPosition, ConstellationLines.Frame targetFrame, out Vector3 targetEuler, out float fieldOfView)
     {
-        Quaternion targetRotation = Quaternion.LookRotation(constellationLocalPosition);
-        targetRotation = skyTransform.localRotation * targetRotation * Quaternion.Euler(0f, 0f, targetFrame.ZRotation);
+        Quaternion localRotation = Quaternion.LookRotation(constellationLocalPosition);
+        Quaternion targetRotation = skyTransform.localRotation * localRotation * Quaternion.Euler(0f, 0f, targetFrame.ZRotation);
+
         targetEuler = targetRotation.eulerAngles;
+        //targetEuler.x -= targetEuler.x > 180 ? 360f : 0f; // Do not uncomment this line. It fucks with the manual euler angle rotation.
+
+        // If the x euler angle is less than the angular radius of the constellation, rotate the sky and change the target rotation according to the rotated sky.
+        if (targetEuler.x > 360f - targetFrame.FieldOfView / 2f || targetEuler.x < 180f)
+        {
+            // oh no
+            Debug.Log("amIreal");
+
+            Vector3 n = skyTransform.InverseTransformDirection(Vector3.up);
+            float h = Mathf.Sin(Mathf.Deg2Rad * targetFrame.FieldOfView / 2f);
+            float alpha = Mathf.Atan2(n.z, n.x);
+            float localRotationEulerXRad = Mathf.Deg2Rad * localRotation.eulerAngles.x;
+            float arcsinArgument = (h + Mathf.Sin(localRotationEulerXRad) * n.y) / ((n.x + n.z) * Mathf.Cos(localRotationEulerXRad));
+            if (arcsinArgument * arcsinArgument > 1f)
+            {
+                Debug.LogError("You just clicked on a constellation who will never get to right above the horizon. Prepare to die.");
+            }
+            
+            float eulerY1 = Mathf.Rad2Deg * (Mathf.Asin(arcsinArgument) - alpha);
+            eulerY1 %= 360f;
+            eulerY1 += eulerY1 < 0f ? 360f : 0f;
+
+            float eulerY2 = Mathf.Rad2Deg * (Mathf.PI - Mathf.Asin(arcsinArgument) - alpha);
+            eulerY2 %= 360f;
+            eulerY2 += eulerY2 < 0f ? 360f : 0f;
+
+            float localY = localRotation.eulerAngles.y;
+
+            float toY1 = Mathf.Abs(eulerY1 - localY);
+            toY1 = toY1 > 180f ? 360f - toY1 : toY1;
+            float toY2 = Mathf.Abs(eulerY2 - localY);
+            toY2 = toY2 > 180f ? 360f - toY2 : toY2;
+
+            float oneTrueEulerY = toY1 < toY2 ? eulerY1 : eulerY2;
+
+            targetRotation = skyTransform.localRotation * Quaternion.Euler(localRotationEulerXRad, oneTrueEulerY, 0f) * Quaternion.Euler(0f, 0f, targetFrame.ZRotation);
+            targetEuler = targetRotation.eulerAngles;
+        }
+
         if (targetFrame.IsotropicShape)
         {
             // If the constellation makes sense from any angle, don't rotate the camera.
