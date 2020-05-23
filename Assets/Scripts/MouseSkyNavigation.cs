@@ -43,6 +43,9 @@ public class MouseSkyNavigation : MonoBehaviour
     [SerializeField]
     private float skyRotationDirection = 0f;
 
+    [SerializeField]
+    private bool directionsAreEqual = false;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -92,9 +95,9 @@ public class MouseSkyNavigation : MonoBehaviour
             //  The camera's declination is constrained.
             targetRotation.x = Mathf.Clamp(finalPitchVirtual, -maximumDeclination, -mininumDeclination);
 
-            //  If the user intends to drag the camera below the minimum declination, the sky will rotate to reveal more sky in that direction.
+            //  If the user intends to drag the camera below the minimum declination, the sky will rotate to reveal more sky in that direction. If the user intends to drag the camera above the maximum declination, don't.
             float pitchOverflow = finalPitchVirtual - targetRotation.x;
-            degreesToRotate += skyRotationDirection * pitchOverflow;
+            degreesToRotate += pitchOverflow > 0f ? skyRotationDirection * pitchOverflow : 0f;
             targetSkyRotation = initialSkyRotation * Quaternion.Euler(0f, degreesToRotate, 0f);
 
             //  If the user drags downward after rotating the sky, this will allow the user to immediately pan.

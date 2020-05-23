@@ -183,6 +183,8 @@ public class GameManager : MonoBehaviour
 
     private void RegularizeTargetEuler(ref Vector3 targetEuler, Vector3 initialEuler)
     {
+        targetEuler.x -= (targetEuler.x - initialEuler.x > 180f) ? 360f : 0f;
+        targetEuler.x += (targetEuler.x - initialEuler.x < -180f) ? 360f : 0f;
         targetEuler.y -= (targetEuler.y - initialEuler.y > 180f) ? 360f : 0f;
         targetEuler.y += (targetEuler.y - initialEuler.y < -180f) ? 360f : 0f;
         targetEuler.z -= (targetEuler.z - initialEuler.z > 180f) ? 360f : 0f;
@@ -198,16 +200,13 @@ public class GameManager : MonoBehaviour
         //targetEuler.x -= targetEuler.x > 180 ? 360f : 0f; // Do not uncomment this line. It fucks with the manual euler angle rotation.
 
         // If the x euler angle is less than the angular radius of the constellation, rotate the sky and change the target rotation according to the rotated sky.
-        if (targetEuler.x > 360f - targetFrame.FieldOfView / 2f || targetEuler.x < 180f)
+        if (targetEuler.x > 360f - targetFrame.FieldOfView / 2f || targetEuler.x < 180f || targetEuler.x > 360f - mouseSky.MininumDeclination)
         {
-            // oh no
-            Debug.Log("amIreal");
-
             Vector3 n = skyTransform.InverseTransformDirection(Vector3.up);
-            float h = Mathf.Sin(Mathf.Deg2Rad * targetFrame.FieldOfView / 2f);
+            float h = Mathf.Sin(Mathf.Deg2Rad * Mathf.Max(targetFrame.FieldOfView / 2f, mouseSky.MininumDeclination));
             float alpha = Mathf.Atan2(n.z, n.x);
             float localRotationEulerXRad = Mathf.Deg2Rad * localRotation.eulerAngles.x;
-            float arcsinArgument = (h + Mathf.Sin(localRotationEulerXRad) * n.y) / ((n.x + n.z) * Mathf.Cos(localRotationEulerXRad));
+            float arcsinArgument = (h + Mathf.Sin(localRotationEulerXRad) * n.y) / Mathf.Cos(localRotationEulerXRad) / Mathf.Sqrt(n.x * n.x + n.z * n.z);
             if (arcsinArgument * arcsinArgument > 1f)
             {
                 Debug.LogError("You just clicked on a constellation who will never get to right above the horizon. Prepare to die.");
@@ -230,7 +229,9 @@ public class GameManager : MonoBehaviour
 
             float oneTrueEulerY = toY1 < toY2 ? eulerY1 : eulerY2;
 
-            targetRotation = skyTransform.localRotation * Quaternion.Euler(localRotationEulerXRad, oneTrueEulerY, 0f) * Quaternion.Euler(0f, 0f, targetFrame.ZRotation);
+            skyTransform.GetComponent<Sky>().RotateSky(oneTrueEulerY - localY);
+
+            targetRotation = skyTransform.localRotation * Quaternion.Euler(localRotation.eulerAngles.x, oneTrueEulerY, 0f) * Quaternion.Euler(0f, 0f, targetFrame.ZRotation);
             targetEuler = targetRotation.eulerAngles;
         }
 

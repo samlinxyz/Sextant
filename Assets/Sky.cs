@@ -29,4 +29,10 @@ public class Sky : MonoBehaviour
         Quaternion targetRotation = Quaternion.AngleAxis(rotationDegrees, transform.up) * transform.rotation;
         transform.DORotateQuaternion(targetRotation, 5f).SetEase(Ease.InOutSine);
     }
+
+    public void RotateSky(float degrees)
+    {
+        Quaternion targetRotation = Quaternion.AngleAxis(degrees, transform.up) * transform.rotation;
+        transform.DORotateQuaternion(targetRotation, 1.2f).SetEase(Ease.OutSine);
+    }
 }
