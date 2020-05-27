@@ -119,29 +119,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab8a44294a09e8a4e8c8aac0f6f971eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  vertices:
-  - {x: 3.8756, y: -18.0285, z: 68.019}
-  - {x: 250.739, y: -679.08, z: 2097.33}
-  - {x: 0.73805, y: -11.8777, z: 47.046}
-  - {x: 3.8756, y: -18.0285, z: 68.019}
-  - {x: 0.73805, y: -11.8777, z: 47.046}
-  - {x: -4.1916, y: -41.634, z: 156.029}
-  - {x: 20.7088, y: -56.835, z: 148.504}
-  - {x: 46.5, y: -81.187, z: 191.699}
-  - {x: 29.3391, y: -41.811, z: 140.842}
-  - {x: 143.789, y: -163.043, z: 694.81}
-  - {x: 145.494, y: -194.123, z: 816.29}
-  - {x: 29.3391, y: -41.811, z: 140.842}
-  - {x: 4.0225, y: -40.53, z: 106.178}
-  - {x: 1.82286, y: -11.1179, z: 26.8477}
-  - {x: 4.0225, y: -40.53, z: 106.178}
-  - {x: 3.8756, y: -18.0285, z: 68.019}
-  - {x: 250.739, y: -679.08, z: 2097.33}
-  - {x: 29.3391, y: -41.811, z: 140.842}
-  - {x: 20.7088, y: -56.835, z: 148.504}
-  - {x: 4.0225, y: -40.53, z: 106.178}
-  - {x: 20.7088, y: -56.835, z: 148.504}
-  - {x: 250.739, y: -679.08, z: 2097.33}
+  <helloWorld>k__BackingField: 0
   game: {fileID: 0}
   field: {fileID: 0}
   gizmosAlpha: 1
@@ -150,7 +128,19 @@ MonoBehaviour:
   squishFactor: 1
   fieldOfView: 30
   zRotation: 0
+  stages: []
+  lines: []
+  frame:
+    fieldOfView: 60
+    zRotation: 0
+    isotropicShape: 0
   levelSphere: {fileID: 8119432871388862566}
+  squishParameters:
+    mode: 0
+    radialCompression: 1
+    minRadius: 0
+    power: 1
+    median: 200
 --- !u!135 &8119432871388862566
 SphereCollider:
   m_ObjectHideFlags: 0

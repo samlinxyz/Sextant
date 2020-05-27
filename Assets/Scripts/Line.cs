@@ -19,9 +19,11 @@ public class Line : MonoBehaviour
         EditorUpdateColor();
         line.startWidth = line.endWidth = lineWidth;
     }
-    void Update()
+    void LateUpdate()
     {
+        // If update position is done in the update loop, then line positions are calculated before the camera moves, which makes the lines jitter around during movement.
         UpdatePosition();
+        line.startWidth = line.endWidth = (0.5f * cam.fieldOfView / Settings.I.SkyViewFOV + 0.5f) * lineWidth;
     }
     /*
     public void MakeEndsVisibleBasedOnHowFarThePlayerIsFromItInDegrees(Vector3 playerForward)
@@ -56,7 +58,9 @@ public class Line : MonoBehaviour
 
             float angleToHome = Vector3.Angle(playerForward, parentPosition);
 
-            float alpha = playMaxAlpha * Mathf.Max(Mathf.Clamp01(1f - starViewportPosition.magnitude / visibleRangeInViewportVerticals), Mathf.Clamp01(1f - angleToHome / 30f));
+            float howCloseToHome = Mathf.Clamp01(1f - angleToHome / 15f);
+
+            float alpha = playMaxAlpha * Mathf.Max(Mathf.Clamp01(1f - starViewportPosition.magnitude / visibleRangeInViewportVerticals), Mathf.Pow(howCloseToHome, 4f));
             alphaKeys[i] = new GradientAlphaKey(alpha, i);
         }
         Gradient gradient = new Gradient();
@@ -125,7 +129,7 @@ public class Line : MonoBehaviour
         {
             endColor1 = starStage1.Completed ? starTransforms[0].GetComponent<SpriteRenderer>().color : incompleteColor;
         }
-        endColor1.a = (endColor1 == incompleteColor)? incompleteAlpha : alpha;
+        endColor1.a = (endColor1 == incompleteColor) ? incompleteAlpha : alpha;
         Color endColor2 = Color.magenta;
         if (starStage2 == null)
         {
@@ -235,6 +239,13 @@ public class Line : MonoBehaviour
     [SerializeField]
     private StarSublevel starStage2;
 
+    [SerializeField]
+    private Vector3[] starPositions = new Vector3[2];
+    public Vector3[] StarPositions
+    {
+        get { return starPositions; }
+    }
+
     public bool SetStarReferences(GameObject[] selectedStars, StarSublevel[] stages)
     {
         if (starTransforms.Length != 2)
@@ -248,8 +259,8 @@ public class Line : MonoBehaviour
             return false;
         }
 
-        starTransforms[0] = selectedStars[0].transform;
-        starTransforms[1] = selectedStars[1].transform;
+        starTransforms = selectedStars.Select(starGO => starGO.transform).ToArray();
+        starPositions = selectedStars.Select(starGO => starGO.transform.position).ToArray();
 
         starStage1 = stages[0];
         starStage2 = stages[1];
@@ -261,32 +272,18 @@ public class Line : MonoBehaviour
     //  This sets the reference to the Star associated with this Stage
     public Transform[] FindAssociatedStars()
     {
-        Transform[] stars = new Transform[2]
-        {
-            FindStarAt(line.GetPosition(0)),
-            FindStarAt(line.GetPosition(1))
-        };
-
-        return stars;
+        return starPositions.Select(position => FindStarAt(position)).ToArray();
     }
 
     private Transform FindStarAt(Vector3 vertex)
     {
-        Transform candidate = null;
-        float closestAngle = 180f;
-        foreach (Transform star in StarField.StarTransformArray())
-        {
-            float angle = Vector3.Angle(vertex, star.position);
-            if (closestAngle > angle)
-            {
-                candidate = star;
-                closestAngle = angle;
-            }
-        }
+        float[] squareDistances = StarField.StarTransformArray().Select(starTransform => (vertex - starTransform.position).sqrMagnitude).ToArray();
+        float leastSquareDistance = squareDistances.Min();
+        Transform closestStarTransform = StarField.StarTransformArray()[squareDistances.ToList().IndexOf(leastSquareDistance)];
 
-        if (closestAngle > Settings.I.StarReferenceMaxErrorDegrees)
-            Debug.LogWarning($"The associated star is more than {Settings.I.StarReferenceMaxErrorDegrees} degrees away from an end of {this.name} {transform.GetSiblingIndex()} of {transform.parent.name}.");
+        if (Mathf.Sqrt(leastSquareDistance) > Settings.I.StarReferenceMaxErrorDegrees)
+            Debug.LogWarning($"The associated star is more than {Mathf.Sqrt(Settings.I.StarReferenceMaxErrorDegrees)} away from an end of {this.name} {transform.GetSiblingIndex()} of {transform.parent.name}.");
 
-        return candidate;
+        return closestStarTransform;
     }
 }

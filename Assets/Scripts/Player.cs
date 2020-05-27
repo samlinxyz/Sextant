@@ -46,15 +46,20 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-
         Move();
         Parallax();
-        if (aimCamera) mainCamera.transform.LookAt(transform.position, transform.up);
         if (Input.GetKeyDown("-") && game.state == GameState.Play)
         {
             FailLevel();
         }
-        
+    }
+
+    private void LateUpdate()
+    {
+        if (aimCamera)
+        {
+            mainCamera.transform.LookAt(transform.position, transform.up);
+        }
     }
 
     public static bool allowMovement = false;
@@ -115,9 +120,7 @@ public class Player : MonoBehaviour
                 aimCamera = false;
                 //  The level is finished.
                 game.LevelComplete();
-                Debug.Log("The level is finished");
-            })
-            ;
+            });
     }
 
     public void FailLevel()
@@ -190,9 +193,6 @@ public class Player : MonoBehaviour
         //  The direction of view that we start with is more than 30 degrees from the axis of the level and also more than 30 degrees from the initial camera view.
         Vector3 view = constellation.position - stage.AssociatedStar.transform.position;
 
-        // logs a warning if the starting position is aligned to the constellation up axis within 30 degrees
-        if (Mathf.Abs(Vector3.Angle(view, upAxis) - 90f) > 60f) Debug.Log("Warning: the starlevel's direction is only " + (90f - Mathf.Abs(Vector3.Angle(view, upAxis) - 90f)));
-
         //  The spacecraft rises into the upper atmosphere and zooms off at the star. The player is then transported to the starting location and zooms out.
         spacecraft.rotation = mainCamera.transform.rotation;
         spacecraft.position = 1f * spacecraft.forward + 5f * Vector3.down;
@@ -240,9 +240,7 @@ public class Player : MonoBehaviour
             .AppendCallback(() =>
             {
                 //  Things to take care of as animation ends.
-                Debug.Log("start Parallax");
 
-                //testCube.rotation = Quaternion.LookRotation(upAxis);
                 allowMovement = true;
                 aimCamera = true;
 

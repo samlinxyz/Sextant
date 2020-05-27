@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using Supyrb;
+using System.Linq;
 
 [CustomEditor(typeof(ConstellationLines))]
 public class ConstellationLinesEditor : Editor
@@ -14,7 +15,7 @@ public class ConstellationLinesEditor : Editor
 
         // The camera FOV and orientation that the camera zooms to when it looks at the constellation.
         // zoom and rotation characteristic view frame 
-        if (GUILayout.Button("Set frame to scene (does not work because SetValue)"))
+        if (GUILayout.Button("Set frame to scene"))
         {
             SetFrameFor(lines);
         }
@@ -40,23 +41,24 @@ public class ConstellationLinesEditor : Editor
             }
         }
 
-        /*
-        // Soon to be deprecated 
-        float newSquishFactor = EditorGUILayout.Slider(lines.SquishFactor, 1f, 50f);
-        if (newSquishFactor != lines.SquishFactor)
-        {
-            // this shit change isn't preserved ! use serialization! I hate this!
-            //lines.squishFactor = newSquishFactor;
-            lines.field.SquishStarsAround(lines.transform, true);
-        }
-        */
-
         EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("Transform starfield")) TransformStarsAround(lines);
         if (GUILayout.Button("Reset starfield")) ResetStarPositions();
         EditorGUILayout.EndHorizontal();
 
         if (GUILayout.Button("Normalize stage positions")) NormalizeStagePositions(lines);
+
+        if (GUILayout.Button("Initialize star positions of lines and stages")) InitializeStarPositions(lines);
+        if (GUILayout.Button("Set Stage Diffraction Size and Color")) SetStageDiffractionSizeAndColor(lines);
+
+        EditorGUILayout.BeginHorizontal();
+        float radius = GetStageClickingRadius(lines);
+        radius = EditorGUILayout.Slider("Stage Click Radius", radius, 1f, 100f);
+        if (GetStageClickingRadius(lines) != radius)
+        {
+            SetStageClickingRadius(lines, radius);
+        } 
+        EditorGUILayout.EndHorizontal();
     }
 
     private void TransformStarsAround(ConstellationLines constellation)
@@ -90,21 +92,6 @@ public class ConstellationLinesEditor : Editor
         }
     }
 
-    protected virtual void OnSceneGUI()
-    {
-        ConstellationLines lines = (ConstellationLines)target;
-
-        for (int i = 0; i < lines.vertices.Count; i += 2)
-        {
-            Vector3 midpoint = Vector3.Slerp(lines.vertices[i], lines.vertices[i + 1], 0.5f);
-
-            Handles.color = Color.red;
-            if (lines.showDelete)
-                if (Handles.Button(midpoint, Quaternion.identity, HandleUtility.GetHandleSize(midpoint) / 10f, HandleUtility.GetHandleSize(midpoint) / 10f, Handles.CircleHandleCap))
-                    lines.vertices.RemoveRange(i, 2);
-        }
-    }
-
     private void SetFrameFor(ConstellationLines lines)
     {
         SceneView view = SceneView.lastActiveSceneView;
@@ -130,7 +117,57 @@ public class ConstellationLinesEditor : Editor
         Undo.RegisterFullObjectHierarchyUndo(level.gameObject, "Normalize Stage Positions");
         foreach (StarSublevel stage in level.Stages)
         {
-            stage.transform.position = 200f * stage.AssociatedStar.TruePosition.normalized;
+            stage.transform.position = 100f * stage.AssociatedStar.TruePosition.normalized;
+        }
+    }
+    public void InitializeStarPositions(ConstellationLines level)
+    {
+        Undo.RegisterFullObjectHierarchyUndo(level.gameObject, "Initialize Star Positions");
+
+        foreach (Line line in level.Lines)
+        {
+            SerializedObject so = new SerializedObject(line);
+            Transform[] starTransforms = line.StarTransforms;
+            so.FindProperty("starPositions").GetArrayElementAtIndex(0).vector3Value = starTransforms[0].position;
+            so.FindProperty("starPositions").GetArrayElementAtIndex(1).vector3Value = starTransforms[1].position;
+            so.ApplyModifiedProperties();
+        }
+
+        foreach (StarSublevel stage in level.Stages)
+        {
+            SerializedObject so = new SerializedObject(stage);
+            Star star = stage.AssociatedStar;
+            so.FindProperty("starPosition").vector3Value = star.transform.position;
+            so.ApplyModifiedProperties();
+        }
+    }
+    public void SetStageDiffractionSizeAndColor(ConstellationLines level)
+    {
+        foreach (StarSublevel stage in level.Stages)
+        {
+            Undo.RegisterFullObjectHierarchyUndo(stage.gameObject, "Set Stage Diffraction Size and Color");
+            stage.EditorSetDiffractionColor();
+        }
+    }
+
+    public void SetStageClickingRadius(ConstellationLines level, float radius)
+    {
+        Undo.RegisterFullObjectHierarchyUndo(level.gameObject, "Set Stage Clicking Radius");
+        foreach (SphereCollider sphereCollider in level.Stages.Select(stage => stage.GetComponent<SphereCollider>()).ToArray())
+        {
+            sphereCollider.radius = radius;
+        }
+    }
+
+    private float GetStageClickingRadius(ConstellationLines level)
+    {
+        if (level.Stages.Length > 0)
+        {
+            return level.Stages[0].GetComponentInChildren<SphereCollider>().radius;
+        }
+        else
+        {
+            return 5f;  // Arbitrary number.
         }
     }
 }

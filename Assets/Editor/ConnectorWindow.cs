@@ -31,12 +31,6 @@ public class ConnectorWindow : EditorWindow
         if (constellation != null)
         {
             EditorGUILayout.BeginVertical("Box");
-            EditConstellationLines();
-            EditorGUILayout.EndVertical();
-
-            EditorGUILayout.Space();
-
-            EditorGUILayout.BeginVertical("Box");
             EditConstellationSublevels();
             EditorGUILayout.EndVertical();
 
@@ -68,33 +62,6 @@ public class ConnectorWindow : EditorWindow
         else EditorGUILayout.HelpBox("Select a constellation to edit.", MessageType.Warning);
 
         obj.ApplyModifiedProperties();
-    }
-
-    void EditConstellationLines()
-    {
-        GUILayout.Label("Edit constellation lines", EditorStyles.boldLabel);
-
-        ConstellationLines lines = constellation.GetComponent<ConstellationLines>();
-
-        GUILayout.Label("There are currently " + lines.GetLineCount() + " constellation lines");
-
-
-
-        if (GUILayout.Button("Add Line"))
-        {
-            if (Selection.gameObjects.Length == 2)
-            {
-                Vector3 start = Selection.gameObjects[0].transform.position;
-                Vector3 end = Selection.gameObjects[1].transform.position;
-
-                lines.AddLine(start, end);
-            }
-            else Debug.Log("Connections are made only between two selected objects. There are currently " + Selection.gameObjects.Length + " objects selected.");
-
-            Selection.activeObject = constellation;
-        }
-        if (Selection.gameObjects.Length != 2)
-            EditorGUILayout.HelpBox("Connections are made only between two selected objects. There are currently " + Selection.gameObjects.Length + " objects selected.", MessageType.Warning);
     }
 
     void EditConstellationSublevels()

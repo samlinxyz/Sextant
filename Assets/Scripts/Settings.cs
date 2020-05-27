@@ -44,6 +44,12 @@ public class Settings : ScriptableObject
         return maxRadians * Mathf.Clamp01(normalizedDifficulty);
     }
 
+
+
+    [SerializeField]
+    private float skyViewFOV = 70f;
+    public float SkyViewFOV { get { return skyViewFOV; } }
+
     [SerializeField]
     private Locus locus = Locus.Planckian;
 

@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   starReferenceMaxErrorDegrees: 0.02
   maxTemp: 30000
-  maxRadians: 10
+  maxRadians: 5
+  skyViewFOV: 70
   locus: 0
   planckianLocus:
     serializedVersion: 2

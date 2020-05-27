@@ -33,7 +33,7 @@ public class StarFieldManager : MonoBehaviour
     }
 
     //  Creates the original positions of the stars
-        public void ConfigureStarsTransform()
+    public void ConfigureStarsTransform()
     {
         foreach (Star star in GetComponentsInChildren<Star>())
         {

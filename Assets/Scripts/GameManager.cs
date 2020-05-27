@@ -6,9 +6,11 @@ using System.IO;
 using TMPro;
 using DG.Tweening;
 using UnityEngine.Windows.WebCam;
+using UnityEngine.Rendering.PostProcessing;
 
 public enum GameState
 {
+    Menu,   //  When the player is still at the main menu
     Sky,    //  When the player is looking around at all the constellations
     Level,  //  When the player has tapped on one specific constellation and has zoomed in
     Play    //  When the player is navigating the stars
@@ -58,9 +60,6 @@ public class GameManager : MonoBehaviour
     public MouseSkyNavigation mouseSky;
 
     #region Selection Camera Animation Variables
-    [SerializeField]
-    private float skyViewFOV = 70f;
-    public float SkyViewFOV { get { return skyViewFOV; } }
 
     [SerializeField]
     private float zoomDuration = 1f;
@@ -88,10 +87,6 @@ public class GameManager : MonoBehaviour
 
         DontDestroyOnLoad(gameObject);
 
-        state = GameState.Sky;
-
-        mouseSky.enabled = true;
-
         RenderSettings.skybox.SetFloat("_AtmosphereThickness", 1f);
 
         starSize = referenceStarSize;
@@ -99,16 +94,6 @@ public class GameManager : MonoBehaviour
         field.ConfigureStarsTransform();
 
         DOTween.defaultEaseType = Ease.Linear;
-
-        
-    }
-
-    private void Update()
-    {
-        if (true)
-        {
-
-        }
     }
 
     void Start()
@@ -122,6 +107,18 @@ public class GameManager : MonoBehaviour
     }
 
     #region Level Navigation
+
+    public void GoToSky()
+    {
+        state = GameState.Sky;
+
+        mouseSky.enabled = true;
+    }
+
+    public void StartTutorial()
+    {
+        Debug.LogError("StartTutorial() currently does nothing.");
+    }
 
     public void SelectLevel(Transform constellation)
     {
@@ -140,7 +137,7 @@ public class GameManager : MonoBehaviour
         EndCameraAnimations();
         CalculateTargetEulersAndFOV(constellation.localPosition, lines.getFrame, out Vector3 targetEuler, out float fieldOfView);
         cameraRotationAndFOV = DOCameraRotationAndFOV(targetEuler, fieldOfView, zoomingIn: true);
-        DOTween.To(x => starSize = x, starSize, (2f - fieldOfView / skyViewFOV) * referenceStarSize * fieldOfView / skyViewFOV, zoomDuration);
+        DOTween.To(x => starSize = x, starSize, (2f - fieldOfView / Settings.I.SkyViewFOV) * referenceStarSize * fieldOfView / Settings.I.SkyViewFOV, zoomDuration);
         
         selectedLevelName.text = constellation.gameObject.name;
 
@@ -260,7 +257,7 @@ public class GameManager : MonoBehaviour
     private void CalculateTargetEulersAndFOV(Vector3 constellationLocalPosition, out Vector3 targetEuler, out float fieldOfView)
     {
         targetEuler = Quaternion.LookRotation(skyTransform.localRotation * constellationLocalPosition).eulerAngles;
-        fieldOfView = skyViewFOV; // This is bad code. you should not use an overload to have a different function.
+        fieldOfView = Settings.I.SkyViewFOV; // This is bad code. you should not use an overload to have a different function.
     }
 
     private Tween RotateCameraXY(Vector2 initial, Vector2 target, float duration)

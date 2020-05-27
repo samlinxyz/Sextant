@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using System.Linq;
 
 public class StarSublevel : MonoBehaviour
 {
@@ -34,10 +35,13 @@ public class StarSublevel : MonoBehaviour
     }
     void OnMouseUpAsButton()
     {
-        Debug.Log("Iambeinglcicked");
         if (game.state == GameState.Level)
         {
             game.SelectStage(this, Completed);
+        }
+        else if (game.state == GameState.Sky && game.mouseSky.dragged == false && !UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+        {
+            game.SelectLevel(transform.parent.parent);
         }
     }
 
@@ -48,9 +52,7 @@ public class StarSublevel : MonoBehaviour
             transform.rotation = Quaternion.LookRotation(transform.position, cam.transform.up);
             transform.Rotate(0f, 0f, levels.DiffractionAngle);
         }
-
-
-}
+    }
 
     public SpriteRenderer diffraction;
     public SpriteRenderer refraction;
@@ -88,38 +90,35 @@ public class StarSublevel : MonoBehaviour
     private Star associatedStar = null;
     public Star AssociatedStar { get { return associatedStar; } }
 
+    [SerializeField]
+    private Vector3 starPosition = Vector3.zero;
+    public Vector3 StarPosition
+    {
+        get { return starPosition; }
+    }
+
     //  This sets the reference to the Star associated with this Stage
     public Star FindAssociatedStar()
     {
-        Transform candidateStar = null;
-        float closestAngle = 180f;
-        foreach (Transform star in StarField.StarTransformArray())
-        {
-            float angle = Vector3.Angle(transform.position, star.position);
-            if (closestAngle > angle)
-            {
-                candidateStar = star;
-                closestAngle = angle;
-            }
-        }
+        float[] squareDistances = StarField.StarTransformArray().Select(starTransform => (starTransform.localPosition - starPosition).sqrMagnitude).ToArray();
+        float leastSquareDistance = squareDistances.Min();
+        Transform closestStarTransform = StarField.StarTransformArray()[squareDistances.ToList().IndexOf(leastSquareDistance)];
 
-        if (closestAngle > Settings.I.StarReferenceMaxErrorDegrees)
+        if (Mathf.Sqrt(leastSquareDistance) > Settings.I.StarReferenceMaxErrorDegrees)
             Debug.LogWarning($"The star set to be the associated star is more than {Settings.I.StarReferenceMaxErrorDegrees} degrees away from stage {this.name}. Check that associated star for {this.name} is correct.");
-        //associatedStar = candidateStar.GetComponent<Star>();
+ 
+        return closestStarTransform.GetComponent<Star>();
+    }
 
-        /*
+    public void EditorSetDiffractionColor()
+    {
         //  Set up the stage to match the star's color and size
-        float distance = associatedStar.transform.position.magnitude;
-        float vmag = associatedStar.correctedAbsoluteMagnitude - 7.5f + 5 * Mathf.Log10(distance);
+        float squareDistance = starPosition.sqrMagnitude;
+        float vmag = associatedStar.correctedAbsoluteMagnitude - 7.5f + 2.5f * Mathf.Log10(squareDistance);
         vmag = 1f - vmag / 6.5f;
         vmag = Mathf.Clamp(vmag, 0f, 5f);
 
-        
-        diffraction.transform.localScale = 1.5f * Vector3.one * (0.75f * vmag + 0.25f);
+        diffraction.transform.localScale = 0.8f * Vector3.one * (0.75f * vmag + 0.25f);
         diffraction.color = associatedStar.TrueColor;
-        */
-
-        return candidateStar.GetComponent<Star>();
     }
-
 }

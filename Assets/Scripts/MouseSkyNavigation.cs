@@ -43,9 +43,6 @@ public class MouseSkyNavigation : MonoBehaviour
     [SerializeField]
     private float skyRotationDirection = 0f;
 
-    [SerializeField]
-    private bool directionsAreEqual = false;
-
     // Start is called before the first frame update
     void Start()
     {
@@ -113,7 +110,7 @@ public class MouseSkyNavigation : MonoBehaviour
         if (clickedSinceEnabled)
         {
             mainCamera.transform.rotation = Quaternion.Slerp(mainCamera.transform.rotation, Quaternion.Euler(targetRotation), dragSpeed * Time.deltaTime);
-            mainCamera.fieldOfView = Mathf.Lerp(mainCamera.fieldOfView, game.SkyViewFOV, fOVRelaxSpeed * Time.deltaTime);
+            mainCamera.fieldOfView = Mathf.Lerp(mainCamera.fieldOfView, Settings.I.SkyViewFOV, fOVRelaxSpeed * Time.deltaTime);
 
             skyTransform.rotation = Quaternion.Slerp(skyTransform.rotation, targetSkyRotation, dragSpeed * Time.deltaTime);
         }

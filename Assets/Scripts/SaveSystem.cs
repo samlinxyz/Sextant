@@ -6,7 +6,6 @@ public static class SaveSystem
 {
     public static void SaveProgress(Levels levels)
     {
-        Debug.Log("saving progress");
         string path = Path.Combine(Application.persistentDataPath, "progress.lol");
 
         BinaryFormatter formatter = new BinaryFormatter();
@@ -16,6 +15,8 @@ public static class SaveSystem
 
         formatter.Serialize(stream, data);
         stream.Close();
+
+        Debug.Log("Autosaved progress");
     }
 
     public static ProgressData LoadProgress()

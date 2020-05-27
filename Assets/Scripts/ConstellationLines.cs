@@ -5,8 +5,6 @@ using UnityEngine;
 
 public class ConstellationLines : MonoBehaviour
 {
-    public List<Vector3> vertices;
-
     [field: SerializeField]
     public float helloWorld { get; set; }
 
@@ -38,7 +36,7 @@ public class ConstellationLines : MonoBehaviour
     {
         get
         {
-            if (stages == null || stages.Length == 0)
+            if (stages == null || stages.Length == 0 || Application.isEditor)
             {
                 stages = GetComponentsInChildren<StarSublevel>();
             }
@@ -52,7 +50,7 @@ public class ConstellationLines : MonoBehaviour
     {
         get
         {
-            if (lines == null || lines.Length == 0)
+            if (lines == null || lines.Length == 0 || Application.isEditor)
             {
                 lines = GetComponentsInChildren<Line>();
             }
@@ -114,7 +112,6 @@ public class ConstellationLines : MonoBehaviour
     {
         game = GameManager.instance;
         field = StarFieldManager.instance;
-        vertices = new List<Vector3>();
     }
 
     public void ShowStages(bool show)
@@ -136,6 +133,9 @@ public class ConstellationLines : MonoBehaviour
         Gizmos.color = Color.white * gizmosAlpha;
         DrawLines();
 
+        Gizmos.color = Color.Lerp(Color.red, Color.white, 0.5f) * gizmosAlpha;
+        DrawStageStarPositions();
+
         Gizmos.color = Color.green * gizmosAlpha;
         DrawStartingPoints();
 
@@ -149,12 +149,31 @@ public class ConstellationLines : MonoBehaviour
 
     private void DrawLines()
     {
-        for (int i = 0; i < vertices.Count; i += 2)
+        foreach (Line line in Lines)
         {
             if (transformVertices)
-                Gizmos.DrawLine(StarFieldManager.SquishPosition(squishParameters, vertices[i]), StarFieldManager.SquishPosition(squishParameters, vertices[i+1]));
+            {
+                Gizmos.DrawLine(from: StarFieldManager.SquishPosition(squishParameters, line.StarTransforms[0].position), to: StarFieldManager.SquishPosition(squishParameters, line.StarTransforms[1].position));
+            }
             else
-                Gizmos.DrawLine(vertices[i], vertices[i + 1]);
+            {
+                Gizmos.DrawLine(from: line.StarTransforms[0].position, to: line.StarTransforms[1].position);
+            }
+        }
+    }
+
+    private void DrawStageStarPositions()
+    {
+        foreach (StarSublevel stage in Stages)
+        {
+            if (transformVertices)
+            {
+                Gizmos.DrawSphere(center: StarFieldManager.SquishPosition(squishParameters, stage.AssociatedStar.TruePosition), radius: 5f);
+            }
+            else
+            {
+                Gizmos.DrawSphere(center: stage.AssociatedStar.TruePosition, radius: 5f);
+            }
         }
     }
 
@@ -164,21 +183,10 @@ public class ConstellationLines : MonoBehaviour
         {
             // Projects starting point of stars onto the player movement sphere.
             Vector3 projectedLocalLocation = (StarFieldManager.SquishPosition(squishParameters, stage.AssociatedStar.TruePosition) - transform.localPosition).normalized * transform.localPosition.magnitude;
-            Gizmos.DrawSphere(transform.root.TransformPoint(projectedLocalLocation) + transform.position, 10f);
+            Gizmos.DrawSphere(center: transform.root.TransformPoint(projectedLocalLocation) + transform.position, radius: 10f);
         }
     }
     #endregion
-
-    public void AddLine(Vector3 start, Vector3 end)
-    {
-        vertices.Add(start);
-        vertices.Add(end);
-    }
-
-    public int GetLineCount() { return vertices.Count / 2; }
-    //public void SetSquishFactor() { squishFactor = game.squishynessFactor; } 
-    public float GetSquishFactor() { return squishFactor; }
-
 
     [System.Serializable]
     public class Frame
