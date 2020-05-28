@@ -22,8 +22,9 @@ public class GameManager : MonoBehaviour
     public Levels levels;
     public Transform level;
     public StarSublevel stage;
-    
-    public CanvasGroup skyViewMenu;
+
+    [SerializeField]
+    private MainMenu mainMenu = null;
 
     public TextMeshProUGUI selectedLevelName;
     public CanvasGroup levelSelectionCanvas;
@@ -126,7 +127,6 @@ public class GameManager : MonoBehaviour
         level = constellation;
 
         mouseSky.enabled = false;
-        skyViewMenu.gameObject.SetActive(false);
 
         ConstellationLines lines = level.GetComponent<ConstellationLines>();
         level.GetComponent<SphereCollider>().enabled = false;
@@ -143,34 +143,21 @@ public class GameManager : MonoBehaviour
 
         levelSelectionCanvas.alpha = 0f;
         levelSelectionCanvas.gameObject.SetActive(true);
-        levelSelectionCanvas.DOFade(1f, 0.5f);
+
+        DOTween.Sequence()
+            .Append(mainMenu.AnimateMenuButtonAlpha(fadeIn: false))
+            .Append(levelSelectionCanvas.DOFade(1f, 0.5f));
+
     }
 
     private Tween DOCameraRotationAndFOV(Vector3 targetEuler, float fieldOfView, bool zoomingIn)
     {
-        Sequence animation = DOTween.Sequence();
-        /*
-        if (zoomingIn)
-        {
-            animation
-                .Append(cam.DOFieldOfView(fieldOfView, zoomDuration).SetEase(Ease.OutQuad))
-                .Join(RotateCameraXY(targetEuler, zoomDuration))
-                .Join(RotateCameraZ(targetEuler.z, zoomDuration));
-        }
-        else
-        {
-            animation
-                .Append(cam.DOFieldOfView(fieldOfView, zoomDuration).SetEase(Ease.OutQuad))
-                .Join(RotateCameraXY(targetEuler, zoomDuration))
-                .Join(RotateCameraZ(targetEuler.z, zoomDuration));
-        }
-        */
         Vector3 initialEuler = cam.transform.rotation.eulerAngles;
         RegularizeTargetEuler(ref targetEuler, initialEuler);
 
         float pushback = 0.4f * Mathf.Clamp01(Vector3.Angle(Quaternion.Euler(targetEuler) * Vector3.forward, Quaternion.Euler(initialEuler) * Vector3.forward) / 90f);
 
-        animation
+        Sequence animation = DOTween.Sequence()
             .Append(RotateCameraXY(initialEuler, targetEuler, 0.7f * zoomDuration).SetEase(Ease.OutCubic))
             .Insert(pushback * zoomDuration, cam.DOFieldOfView(fieldOfView, (1f - pushback) * zoomDuration).SetEase(Ease.InOutCubic))
             .Insert(pushback * zoomDuration, RotateCameraZ(initialEuler.z, targetEuler.z, (1f-pushback) * zoomDuration).SetEase(Ease.InOutCubic));
@@ -468,17 +455,33 @@ public class GameManager : MonoBehaviour
         //mouseSky.SetTarget(constellatio)
         mouseSky.enabled = true;
 
-        skyViewMenu.gameObject.SetActive(true);
 
         level = null;
 
-        levelSelectionCanvas.DOFade(0f, 0.5f).OnComplete(() => levelSelectionCanvas.gameObject.SetActive(false));
+        levelSelectionCanvas.interactable = false;
+        levelSelectionCanvas.blocksRaycasts = false;
+        mainMenu.SetMenuButtonActiveAndInteractable(true);
+
+        Sequence anim = DOTween.Sequence();
+        anim.Append(levelSelectionCanvas.DOFade(0f, 0.5f).OnComplete(() =>
+            {
+                levelSelectionCanvas.interactable = true;
+                levelSelectionCanvas.blocksRaycasts = true;
+                levelSelectionCanvas.gameObject.SetActive(false);
+            }))
+            .AppendCallback(() =>
+            {
+                // If the user double clicked and is now in the menu, 
+                // the menu button should not fade in.
+                if (state != GameState.Menu) 
+                {
+                    mainMenu.AnimateMenuButtonAlpha(fadeIn: true);
+                }
+            });
 
         stage = null;
-
 
         Sequence selectStageSequence = DOTween.Sequence();
-        stage = null;
         //  Animate out previously selected stage
         selectStageSequence
             .Append(stageNameText.DOFade(0f, 0.5f))

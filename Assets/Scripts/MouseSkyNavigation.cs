@@ -43,6 +43,9 @@ public class MouseSkyNavigation : MonoBehaviour
     [SerializeField]
     private float skyRotationDirection = 0f;
 
+    [SerializeField]
+    public bool takingInput = true;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -61,7 +64,7 @@ public class MouseSkyNavigation : MonoBehaviour
         //  As the user moves the mouse, the pitch (x Euler angle) of the camera is made equal to the pitch required to bring the current local space direction to the initial mouse direction's declination. 
         //  The same is done for the camera's yaw (y Euler angle).
 
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) && takingInput)
         {
             //  Stop animating the level transition?
             if (!clickedSinceEnabled)
@@ -78,7 +81,7 @@ public class MouseSkyNavigation : MonoBehaviour
             initialSkyRotation = skyTransform.rotation;
             degreesToRotate = 0f;
         }
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(0) && takingInput)
         {
             Vector2 deltaPosition = Input.mousePosition - initialMousePosition;
             if (deltaPosition.sqrMagnitude > dragThreshold * dragThreshold)
@@ -119,6 +122,7 @@ public class MouseSkyNavigation : MonoBehaviour
     void OnEnable()
     {
         clickedSinceEnabled = false;
+        takingInput = true;
     }
 
 }
