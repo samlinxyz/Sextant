@@ -55,6 +55,8 @@ public class MainMenu : MonoBehaviour
 
         postProcessing.profile.TryGetSettings(out menuBlur);
         postProcessing.profile.TryGetSettings(out bloom);
+
+        Bloom(turnOn: LoadBloomPlayerPref());
     }
 
 
@@ -71,8 +73,7 @@ public class MainMenu : MonoBehaviour
         if (game.state != GameState.Menu) return;
 
         Sequence menuToSkyAnimation = DOTween.Sequence()
-            .Append(AnimateSkyBlur(movingIntoFocus: true))
-            .Join(AnimateMenuButtons(appearing: false));
+            .Append(AnimateMenuButtons(appearing: false));
 
         if (!HasPlayed())
         {
@@ -80,9 +81,11 @@ public class MainMenu : MonoBehaviour
             ShowTutorialDialog();
             // Disable the Tutorial button once menu is done fading out.
             menuToSkyAnimation.AppendCallback(() => tutorialRect.gameObject.SetActive(false));
+
         }
 
         menuToSkyAnimation
+            .Join(AnimateSkyBlur(movingIntoFocus: true))
             .Append(AnimateMenuButtonAlpha(fadeIn: true));
             
 
@@ -139,6 +142,7 @@ public class MainMenu : MonoBehaviour
     {
 
     }
+
     private void CancelTutorialDialog()
     {
 
@@ -146,12 +150,25 @@ public class MainMenu : MonoBehaviour
 
     private void IncrementPlayCount()
     {
-        PlayerPrefs.SetInt("Play Count", PlayerPrefs.HasKey("Play Count") ? PlayerPrefs.GetInt("Play Count") : 1);
+        PlayerPrefs.SetInt("Play Count", PlayerPrefs.HasKey("Play Count") ? PlayerPrefs.GetInt("Play Count") + 1 : 1);
+        PlayerPrefs.Save();
     }
 
     private bool HasPlayed()
     {
         return PlayerPrefs.HasKey("Play Count") && PlayerPrefs.GetInt("Play Count") > 1;
+    }
+
+    private bool LoadBloomPlayerPref()
+    {
+        return PlayerPrefs.HasKey("Bloom") ? PlayerPrefs.GetInt("Bloom") == 1 : false;
+    }
+
+    public void Bloom(bool turnOn)
+    {
+        bloom.intensity.value = turnOn ? Settings.I.BloomIntensity : 0f;
+        PlayerPrefs.SetInt("Bloom", turnOn ? 1 : 0);
+        PlayerPrefs.Save();
     }
 
     #region Animation
@@ -165,6 +182,7 @@ public class MainMenu : MonoBehaviour
 
         return animation;
     }
+
     public Sequence AnimateCreditsScreenCanvasAlpha(bool fadeIn)
     {
         Sequence animation = DOTween.Sequence()
@@ -174,8 +192,6 @@ public class MainMenu : MonoBehaviour
 
         return animation;
     }
-
-
 
     public Sequence AnimateMenuButtonAlpha(bool fadeIn)
     {
@@ -187,13 +203,12 @@ public class MainMenu : MonoBehaviour
         return animation;
     }
 
-    private Tween AnimateSkyBlur(bool movingIntoFocus)
+    private Sequence AnimateSkyBlur(bool movingIntoFocus)
     {
-        return DOTween.To(() => menuBlur.focusDistance.value, x => menuBlur.focusDistance.value = x, movingIntoFocus ? 5f : 0.1f, 1f);
-    }
-    public void Bloom(bool turnOn)
-    {
-        bloom.intensity.value = turnOn ? 25f : 0f;
+        Sequence animation = DOTween.Sequence();
+        animation.Append(DOTween.To(() => menuBlur.focusDistance.value, x => menuBlur.focusDistance.value = x, movingIntoFocus ? 5f : 0.1f, 1f));
+        animation.InsertCallback(movingIntoFocus ? animation.Duration() : 0f, () => menuBlur.active = !movingIntoFocus);
+        return animation;
     }
 
     private Sequence AnimateMenuButtons(bool appearing)

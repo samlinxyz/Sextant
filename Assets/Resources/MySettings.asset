@@ -15,7 +15,8 @@ MonoBehaviour:
   starReferenceMaxErrorDegrees: 0.02
   maxTemp: 30000
   maxRadians: 5
-  skyViewFOV: 70
+  skyViewFOV: 60
+  bloomIntensity: 12
   locus: 0
   planckianLocus:
     serializedVersion: 2

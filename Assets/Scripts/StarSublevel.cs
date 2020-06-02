@@ -33,9 +33,10 @@ public class StarSublevel : MonoBehaviour
         cam = Camera.main;
         levels = Levels.instance;
     }
+
     void OnMouseUpAsButton()
     {
-        if (game.state == GameState.Level)
+        if (game.state == GameState.Level && !UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
         {
             game.SelectStage(this, Completed);
         }
@@ -49,7 +50,7 @@ public class StarSublevel : MonoBehaviour
     {
         if (visible)
         {
-            transform.rotation = Quaternion.LookRotation(transform.position, cam.transform.up);
+            transform.rotation = Quaternion.LookRotation(cam.transform.forward, cam.transform.up);
             transform.Rotate(0f, 0f, levels.DiffractionAngle);
         }
     }

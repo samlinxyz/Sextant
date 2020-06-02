@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 
@@ -27,7 +25,7 @@ public class Player : MonoBehaviour
     public Ground ground;
     public Transform glow;
 
-    public CanvasGroup joysticks;
+    public CanvasGroup playCanvasGroup;
     public Joystick movementControl;
     public Joystick parallaxControl;
 
@@ -62,7 +60,7 @@ public class Player : MonoBehaviour
         }
     }
 
-    public static bool allowMovement = false;
+    public bool allowMovement = false;
     public float speed;
     public void Move()
     {
@@ -109,10 +107,10 @@ public class Player : MonoBehaviour
             {
                 allowMovement = false;
             })
+            .AppendCallback(() => FadePlayCanvasGroup(fadeIn: false))
             .Append(transform.DORotateQuaternion(Quaternion.LookRotation(constellation.position, transform.up), 2f).SetEase(Ease.OutCubic))
-            .Join(joysticks.DOFade(0f, 1f).SetEase(Ease.InQuart).OnComplete(() => joysticks.gameObject.SetActive(false)))
             .Join(glow.DOScale(0.05f, 2f).SetEase(Ease.InOutQuad))
-            .Append(DOTween.To(x => RenderSettings.skybox.SetFloat("_AtmosphereThickness", x), 0f, 1f, 5f).SetEase(Ease.OutQuad))
+            .Append(AnimateAtmosphereThickness(fadeIn: true))
             .Join(spacecraft.DOMove(3f * transform.forward + 5f * Vector3.down, 2f).SetEase(Ease.InCirc))
             .Join(DOTween.To(x => { ground.height = x; }, 100f, 1f, 4f).SetEase(Ease.OutCirc).OnPlay(() => { ground.gameObject.SetActive(true); }))
             .AppendCallback(() =>
@@ -127,7 +125,7 @@ public class Player : MonoBehaviour
     {
         allowMovement = false;
 
-        joysticks.DOFade(0f, 1f).SetEase(Ease.InQuart).OnComplete(() => joysticks.gameObject.SetActive(false));
+        FadePlayCanvasGroup(fadeIn: false);
 
         game.LevelFailed();
 
@@ -176,9 +174,6 @@ public class Player : MonoBehaviour
     //  This one is for if you're starting with a star
     public void ConfigureLevelCameraAround(Transform selectedConstellation, StarSublevel stage)
     {
-
-
-
 
         constellation = selectedConstellation;
 
@@ -230,7 +225,7 @@ public class Player : MonoBehaviour
         Sequence spacecraftAnimation = DOTween.Sequence();
         spacecraftAnimation
             .AppendCallback(() => {game.state = GameState.Play; }) // to disable clicking to star a star sublevel.
-            .Append(DOTween.To(x => RenderSettings.skybox.SetFloat("_AtmosphereThickness", x), 1f, 0f, 5f).SetEase(Ease.OutQuad))
+            .Append(AnimateAtmosphereThickness(fadeIn: false))
             .Join(DOTween.To(x => { ground.height = x; }, 1f, 100f, 4f).SetEase(Ease.InCirc).OnComplete(() => { ground.gameObject.SetActive(false); }))
             .Join(spacecraft.DOMove(mainCamera.ViewportToWorldPoint(new Vector3(0.5f, 0.25f, 1f)), 2.5f).SetEase(Ease.OutQuad))
             .Insert(2.5f, spacecraft.DOMove(stage.AssociatedStar.transform.position, 2f).SetEase(Ease.InQuint))
@@ -240,16 +235,40 @@ public class Player : MonoBehaviour
             .AppendCallback(() =>
             {
                 //  Things to take care of as animation ends.
-
                 allowMovement = true;
                 aimCamera = true;
 
                 ConfigureControls(SystemInfo.deviceType == DeviceType.Handheld);
-                joysticks.gameObject.SetActive(true);
             })
-            .Append(joysticks.DOFade(1f, 1f).SetEase(Ease.OutQuart))
+            .AppendCallback(() => FadePlayCanvasGroup(fadeIn: true))
             ;
-          
+    }
+
+    private Sequence playCanvasGroupFade = null;
+    public Sequence PlayCanvasGroupFade
+    {
+        get { return playCanvasGroupFade; }
+    }
+
+    public void FadePlayCanvasGroup(bool fadeIn)
+    {
+        if (playCanvasGroupFade != null)
+        {
+            playCanvasGroupFade.Kill();
+        }
+        playCanvasGroupFade = DOTween.Sequence()
+            .Append(playCanvasGroup.DOFade(fadeIn ? 1f : 0f, 1f).SetEase(fadeIn ? Ease.OutQuart : Ease.InQuart));
+        playCanvasGroupFade.InsertCallback(fadeIn ? 0f : playCanvasGroupFade.Duration(), () => playCanvasGroup.gameObject.SetActive(fadeIn));
+    }
+
+    public Sequence AnimateAtmosphereThickness(bool fadeIn)
+    {
+        Sequence animation = DOTween.Sequence()
+            .Append(DOTween.To(x => RenderSettings.skybox.SetFloat("_AtmosphereThickness", x), fadeIn ? 0f : 1f, fadeIn ? 1f : 0f, 5f).SetEase(Ease.OutQuad));
+
+        animation.InsertCallback(fadeIn ? 0f : animation.Duration(), () => mainCamera.clearFlags = fadeIn ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor);
+
+        return animation;
     }
 
     public void ConfigureControls(bool forMobile)

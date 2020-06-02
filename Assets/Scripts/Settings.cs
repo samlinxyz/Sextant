@@ -49,6 +49,9 @@ public class Settings : ScriptableObject
     [SerializeField]
     private float skyViewFOV = 70f;
     public float SkyViewFOV { get { return skyViewFOV; } }
+    [SerializeField]
+    private float bloomIntensity = 12f;
+    public float BloomIntensity { get { return bloomIntensity; } }
 
     [SerializeField]
     private Locus locus = Locus.Planckian;

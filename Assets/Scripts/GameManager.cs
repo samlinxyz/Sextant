@@ -46,7 +46,8 @@ public class GameManager : MonoBehaviour
     }
     public Camera cam;
 
-    public Transform player;
+    [SerializeField]
+    private Player player = null;
 
     public Minimap minimap;
 
@@ -323,7 +324,7 @@ public class GameManager : MonoBehaviour
 
         field.SquishStarsAround(lines);
 
-        player.GetComponent<Player>().ConfigureLevelCameraAround(level, stage);
+        player.ConfigureLevelCameraAround(level, stage);
 
 
         //minimap.SetMinimap(true);
@@ -342,8 +343,11 @@ public class GameManager : MonoBehaviour
     //sdffjhfsdsdfsdfjfdsdfsjdfsjkfdjkdsfkdfksjkdfsjkfdskjhfdslkjfhsadlkfjhaslkf hsalf kuhsefliuhvsaneli vae ashfcsam ucscfsfa csfc fsec ifec feilsfeailufseilsefalisflllefslfseclsfelseflililfslisfd
     public Ground ground;
 
+    // When the player clicks stage select from pause,
     public void ReturnToLevel()
     {
+        player.allowMovement = false;
+        Debug.Log("return from level");
         lineManager.enabled = false;
 
         Sequence back = DOTween.Sequence()
@@ -361,6 +365,7 @@ public class GameManager : MonoBehaviour
                 ground.gameObject.SetActive(true);
 
                 RenderSettings.skybox.SetFloat("_AtmosphereThickness", 1f);
+                cam.clearFlags = CameraClearFlags.Skybox;
             })
             .Append(DOTween.To(x => circularFade.fadeRadius = x, 0f, 1f, 1f)
                 .OnStart(() => circularFade.ResetMaskCenter())
@@ -374,13 +379,11 @@ public class GameManager : MonoBehaviour
                     lev.FadeLines(fadeIn: true);
                 }
 
+                selectedLevelName.text = level.gameObject.name;
 
-                    selectedLevelName.text = level.gameObject.name;
+                levelSelectionCanvas.gameObject.SetActive(true);
 
-                    //levelSelectionCanvas.alpha = 0f;
-                    levelSelectionCanvas.gameObject.SetActive(true);
-
-                    stageSelectionCanvas.gameObject.SetActive(true);
+                stageSelectionCanvas.gameObject.SetActive(true);
             })
             .Append(levelSelectionCanvas.DOFade(1f, 0.5f))
             .Join(stageSelectionCanvas.DOFade(1f, 0.5f)
